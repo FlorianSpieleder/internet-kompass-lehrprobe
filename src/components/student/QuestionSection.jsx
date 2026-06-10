@@ -4,20 +4,9 @@ const STEP_LABELS = [
     "Knackpunkt",
     "Eigenschaften",
     "Folgen",
-    "Handlung"
+    "Handlung",
+    "Übersicht"
 ];
-
-function formatTime(isoString) {
-    if (!isoString) return "–";
-    try {
-        return new Date(isoString).toLocaleTimeString("de-DE", {
-            hour: "2-digit",
-            minute: "2-digit"
-        });
-    } catch {
-        return "–";
-    }
-}
 
 function encodeAnswerCode(payload) {
     const cleanPayload = {
@@ -42,7 +31,7 @@ function encodeAnswerCode(payload) {
 
 function Progress({ pageIndex, pageCount }) {
     return (
-        <div className="step-progress">
+        <div className="step-progress" style={{ "--step-count": pageCount, "--step-half-count": pageCount * 2 }}>
             <div className="step-progress-line" aria-hidden="true" />
 
             {Array.from({ length: pageCount }).map((_, index) => {
@@ -67,55 +56,78 @@ function Progress({ pageIndex, pageCount }) {
     );
 }
 
-function getMessageValue(message, index) {
-    return `${index + 1}. ${message.sender} (${message.time}): ${message.text}`;
-}
-
-function MessageSelectQuestion({ question, caseData, value, onChange }) {
+function MessageSelectQuestion({ question, value }) {
     const selectedValues = Array.isArray(value) ? value : [];
     const maxSelections = question.maxSelections ?? 1;
-
-    function toggleMessage(messageValue) {
-        if (selectedValues.includes(messageValue)) {
-            onChange(question.id, selectedValues.filter((entry) => entry !== messageValue));
-            return;
-        }
-
-        if (selectedValues.length >= maxSelections) {
-            return;
-        }
-
-        onChange(question.id, [...selectedValues, messageValue]);
-    }
 
     return (
         <article className="question-card">
             <h2>{question.label}</h2>
-            <p>{question.helper}</p>
+            <p>
+                Klickt die passende Nachricht direkt links im Chat an. Ihr könnt höchstens {maxSelections} Nachrichten auswählen.
+            </p>
 
-            <div className="message-select-list">
-                {caseData.fallbackChat.map((message, index) => {
-                    const messageValue = getMessageValue(message, index);
-                    const isSelected = selectedValues.includes(messageValue);
-                    const isDisabled = !isSelected && selectedValues.length >= maxSelections;
+            <div className="message-selection-summary">
+                {selectedValues.length > 0 ? (
+                    <ol className="selected-message-list">
+                        {selectedValues.map((messageValue) => (
+                            <li key={messageValue}>{messageValue}</li>
+                        ))}
+                    </ol>
+                ) : (
+                    <p className="empty-selection-hint">
+                        Noch keine Nachricht ausgewählt.
+                    </p>
+                )}
+            </div>
+        </article>
+    );
+}
 
-                    return (
-                        <button
-                            key={`${message.sender}-${message.time}-${index}`}
-                            type="button"
-                            className={`message-select-item ${isSelected ? "is-selected" : ""}`}
-                            disabled={isDisabled}
-                            onClick={() => toggleMessage(messageValue)}
-                        >
-                            <span className="message-select-meta">
-                                {message.sender} · {message.time}
-                            </span>
-                            <span className="message-select-text">
-                                {message.text}
-                            </span>
-                        </button>
-                    );
-                })}
+function answerAsList(value) {
+    if (Array.isArray(value)) {
+        return value;
+    }
+
+    const text = String(value ?? "").trim();
+    return text ? [text] : [];
+}
+
+function PresentationAnswer({ question, value, index }) {
+    const entries = answerAsList(value);
+
+    return (
+        <article className="student-summary-card">
+            <div className="student-summary-card-header">
+                <span className="student-summary-number">{index + 1}</span>
+                <h3>{question.label}</h3>
+            </div>
+
+            {entries.length > 0 ? (
+                <ul>
+                    {entries.map((entry) => (
+                        <li key={entry}>{entry}</li>
+                    ))}
+                </ul>
+            ) : (
+                <p>Noch keine Antwort.</p>
+            )}
+        </article>
+    );
+}
+
+function StudentPresentationOverview({ caseData, answers }) {
+    return (
+        <article className="student-summary">
+            <div className="student-summary-grid">
+                {caseData.questions.map((question, index) => (
+                    <PresentationAnswer
+                        key={question.id}
+                        question={question}
+                        index={index}
+                        value={answers[question.id]}
+                    />
+                ))}
             </div>
         </article>
     );
@@ -186,9 +198,7 @@ function QuestionRenderer({ question, caseData, value, onChange }) {
         return (
             <MessageSelectQuestion
                 question={question}
-                caseData={caseData}
                 value={value}
-                onChange={onChange}
             />
         );
     }
@@ -212,7 +222,7 @@ function QuestionRenderer({ question, caseData, value, onChange }) {
     );
 }
 
-function SavedNotice({ savedAt, saveError, serverSaveState }) {
+function SavedNotice({ saveError, serverSaveState }) {
     if (saveError) {
         return (
             <div className="notice notice-error">
@@ -233,25 +243,10 @@ function SavedNotice({ savedAt, saveError, serverSaveState }) {
         );
     }
 
-    if (serverSaveState === "server-success") {
-        return (
-            <div className="notice notice-success">
-                Gespeichert und an die Lehrerseite übertragen um {formatTime(savedAt)}.
-            </div>
-        );
-    }
-
-    if (!savedAt) return null;
-
-    return (
-        <div className="notice notice-success">
-            Lokal gespeichert um {formatTime(savedAt)}.
-        </div>
-    );
+    return null;
 }
 
-function EmergencyCodeBox({ payload }) {
-    const [isOpen, setIsOpen] = useState(false);
+function EmergencyCodeBox({ payload, isOpen }) {
     const [showCode, setShowCode] = useState(false);
     const [copyState, setCopyState] = useState("idle");
     const code = useMemo(() => encodeAnswerCode(payload), [payload]);
@@ -270,14 +265,6 @@ function EmergencyCodeBox({ payload }) {
 
     return (
         <section className="emergency-menu">
-            <button
-                className="emergency-toggle"
-                type="button"
-                onClick={() => setIsOpen((current) => !current)}
-            >
-                Technische Hilfe
-            </button>
-
             {isOpen && (
                 <div className="emergency-panel">
                     <p>
@@ -334,6 +321,8 @@ export default function QuestionSection({
                                             pages,
                                             pageIndex,
                                             setPageIndex,
+                                            hasReadChat,
+                                            setHasReadChat,
                                             answers,
                                             updateAnswer,
                                             isLastPage,
@@ -341,9 +330,13 @@ export default function QuestionSection({
                                             savedAt,
                                             saveError,
                                             serverSaveState,
-                                            currentPayload
-                                        }) {
-    const [hasReadChat, setHasReadChat] = useState(false);
+                                        currentPayload
+                                    }) {
+    const pageCount = pages.length + 1;
+    const isOverviewPage = pageIndex === pages.length;
+    const isSaveSuccess = serverSaveState === "server-success" || Boolean(savedAt);
+    const isSaving = serverSaveState === "saving";
+    const [isEmergencyOpen, setIsEmergencyOpen] = useState(false);
 
     if (!hasReadChat) {
         return (
@@ -372,20 +365,27 @@ export default function QuestionSection({
 
             <Progress
                 pageIndex={pageIndex}
-                pageCount={pages.length}
+                pageCount={pageCount}
             />
 
-            <div className="questions">
-                {pages[pageIndex].map((question) => (
-                    <QuestionRenderer
-                        key={question.id}
-                        question={question}
-                        caseData={caseData}
-                        value={answers[question.id]}
-                        onChange={updateAnswer}
-                    />
-                ))}
-            </div>
+            {isOverviewPage ? (
+                <StudentPresentationOverview
+                    caseData={caseData}
+                    answers={answers}
+                />
+            ) : (
+                <div className="questions">
+                    {pages[pageIndex].map((question) => (
+                        <QuestionRenderer
+                            key={question.id}
+                            question={question}
+                            caseData={caseData}
+                            value={answers[question.id]}
+                            onChange={updateAnswer}
+                        />
+                    ))}
+                </div>
+            )}
 
             <footer className="navigation">
                 <button
@@ -396,23 +396,38 @@ export default function QuestionSection({
                     Zurück
                 </button>
 
+                <button
+                    className="ghost-button navigation-help-button"
+                    type="button"
+                    onClick={() => setIsEmergencyOpen((current) => !current)}
+                >
+                    Technische Hilfe
+                </button>
+
                 {!isLastPage ? (
                     <button
                         className="primary-button"
-                        onClick={() => setPageIndex((current) => Math.min(current + 1, pages.length - 1))}
+                        onClick={() => setPageIndex((current) => Math.min(current + 1, pageCount - 1))}
                     >
                         Weiter
                     </button>
                 ) : (
-                    <button className="save-button" onClick={handleFinalSave}>
-                        Antworten speichern
+                    <button
+                        className={`save-button ${isSaveSuccess ? "is-saved" : ""}`}
+                        onClick={handleFinalSave}
+                        disabled={isSaving}
+                    >
+                        {isSaving ? "Speichert ..." : isSaveSuccess ? "Gespeichert" : "Antworten speichern"}
                     </button>
                 )}
             </footer>
 
-            <SavedNotice savedAt={savedAt} saveError={saveError} serverSaveState={serverSaveState} />
+            <SavedNotice saveError={saveError} serverSaveState={serverSaveState} />
 
-            <EmergencyCodeBox payload={currentPayload} />
+            <EmergencyCodeBox
+                payload={currentPayload}
+                isOpen={isEmergencyOpen}
+            />
         </section>
     );
 }

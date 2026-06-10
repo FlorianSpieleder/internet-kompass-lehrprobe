@@ -3,7 +3,8 @@ import {
   getAnswerStore,
   handleOptions,
   jsonResponse,
-  keyForGroup
+  keyForGroup,
+  sanitizeStoredGroup
 } from "./_shared.mjs";
 
 export default async function handler(request) {
@@ -27,8 +28,9 @@ export default async function handler(request) {
         });
 
         if (data) {
-          groups[groupId] = data;
-          const timestamp = data.receivedAt || data.savedAt;
+          const cleanGroup = sanitizeStoredGroup(groupId, data);
+          groups[groupId] = cleanGroup;
+          const timestamp = cleanGroup.receivedAt || cleanGroup.savedAt;
           if (timestamp && (!latestUpdate || timestamp > latestUpdate)) {
             latestUpdate = timestamp;
           }
