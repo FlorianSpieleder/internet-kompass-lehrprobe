@@ -1,5 +1,12 @@
 import { useMemo, useState } from "react";
 
+const STEP_LABELS = [
+    "Knackpunkt",
+    "Eigenschaften",
+    "Folgen",
+    "Handlung"
+];
+
 function formatTime(isoString) {
     if (!isoString) return "–";
     try {
@@ -33,15 +40,6 @@ function encodeAnswerCode(payload) {
     return `IK1.${btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "")}`;
 }
 
-const STEP_LABELS = [
-    "Problematische Stelle",
-    "Eigenschaften",
-    "Folgen",
-    "Handlung",
-    "Vorstellung",
-    "Speichern"
-];
-
 function Progress({ pageIndex, pageCount }) {
     return (
         <div className="step-progress">
@@ -69,19 +67,148 @@ function Progress({ pageIndex, pageCount }) {
     );
 }
 
-function QuestionCard({ question, value, onChange }) {
+function getMessageValue(message, index) {
+    return `${index + 1}. ${message.sender} (${message.time}): ${message.text}`;
+}
+
+function MessageSelectQuestion({ question, caseData, value, onChange }) {
+    const selectedValues = Array.isArray(value) ? value : [];
+    const maxSelections = question.maxSelections ?? 1;
+
+    function toggleMessage(messageValue) {
+        if (selectedValues.includes(messageValue)) {
+            onChange(question.id, selectedValues.filter((entry) => entry !== messageValue));
+            return;
+        }
+
+        if (selectedValues.length >= maxSelections) {
+            return;
+        }
+
+        onChange(question.id, [...selectedValues, messageValue]);
+    }
+
+    return (
+        <article className="question-card">
+            <h2>{question.label}</h2>
+            <p>{question.helper}</p>
+
+            <div className="message-select-list">
+                {caseData.fallbackChat.map((message, index) => {
+                    const messageValue = getMessageValue(message, index);
+                    const isSelected = selectedValues.includes(messageValue);
+                    const isDisabled = !isSelected && selectedValues.length >= maxSelections;
+
+                    return (
+                        <button
+                            key={`${message.sender}-${message.time}-${index}`}
+                            type="button"
+                            className={`message-select-item ${isSelected ? "is-selected" : ""}`}
+                            disabled={isDisabled}
+                            onClick={() => toggleMessage(messageValue)}
+                        >
+                            <span className="message-select-meta">
+                                {message.sender} · {message.time}
+                            </span>
+                            <span className="message-select-text">
+                                {message.text}
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
+        </article>
+    );
+}
+
+function PropertySelectQuestion({ question, value, onChange }) {
+    const selectedValues = Array.isArray(value) ? value : [];
+    const maxSelections = question.maxSelections ?? 2;
+
+    function toggleOption(option) {
+        if (selectedValues.includes(option)) {
+            onChange(question.id, selectedValues.filter((entry) => entry !== option));
+            return;
+        }
+
+        if (selectedValues.length >= maxSelections) {
+            return;
+        }
+
+        onChange(question.id, [...selectedValues, option]);
+    }
+
+    return (
+        <article className="question-card">
+            <h2>{question.label}</h2>
+            <p>{question.helper}</p>
+
+            <div className="property-options">
+                {question.options.map((option) => {
+                    const isSelected = selectedValues.includes(option);
+                    const isDisabled = !isSelected && selectedValues.length >= maxSelections;
+
+                    return (
+                        <button
+                            key={option}
+                            type="button"
+                            className={`property-option ${isSelected ? "is-selected" : ""}`}
+                            disabled={isDisabled}
+                            onClick={() => toggleOption(option)}
+                        >
+                            {option}
+                        </button>
+                    );
+                })}
+            </div>
+        </article>
+    );
+}
+
+function TextQuestion({ question, value, onChange }) {
     return (
         <article className="question-card">
             <label htmlFor={question.id}>{question.label}</label>
             <p>{question.helper}</p>
             <textarea
                 id={question.id}
-                value={value}
+                value={typeof value === "string" ? value : ""}
                 onChange={(event) => onChange(question.id, event.target.value)}
                 placeholder={question.placeholder}
                 rows={5}
             />
         </article>
+    );
+}
+
+function QuestionRenderer({ question, caseData, value, onChange }) {
+    if (question.type === "message-select") {
+        return (
+            <MessageSelectQuestion
+                question={question}
+                caseData={caseData}
+                value={value}
+                onChange={onChange}
+            />
+        );
+    }
+
+    if (question.type === "property-select") {
+        return (
+            <PropertySelectQuestion
+                question={question}
+                value={value}
+                onChange={onChange}
+            />
+        );
+    }
+
+    return (
+        <TextQuestion
+            question={question}
+            value={value}
+            onChange={onChange}
+        />
     );
 }
 
@@ -209,15 +336,12 @@ export default function QuestionSection({
                                             setPageIndex,
                                             answers,
                                             updateAnswer,
-                                            answeredCount,
-                                            totalCount,
                                             isLastPage,
                                             handleFinalSave,
                                             savedAt,
                                             saveError,
                                             serverSaveState,
-                                            currentPayload,
-                                            onSwitchGroup
+                                            currentPayload
                                         }) {
     const [hasReadChat, setHasReadChat] = useState(false);
 
@@ -253,10 +377,11 @@ export default function QuestionSection({
 
             <div className="questions">
                 {pages[pageIndex].map((question) => (
-                    <QuestionCard
+                    <QuestionRenderer
                         key={question.id}
                         question={question}
-                        value={answers[question.id] ?? ""}
+                        caseData={caseData}
+                        value={answers[question.id]}
                         onChange={updateAnswer}
                     />
                 ))}
@@ -284,6 +409,8 @@ export default function QuestionSection({
                     </button>
                 )}
             </footer>
+
+            <SavedNotice savedAt={savedAt} saveError={saveError} serverSaveState={serverSaveState} />
 
             <EmergencyCodeBox payload={currentPayload} />
         </section>

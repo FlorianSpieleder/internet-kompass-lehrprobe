@@ -11,11 +11,10 @@ const ENTRY_CASE = {
   groupName: "Einstieg",
   title: "Privater Screenshot im Klassenchat",
   focus: "Private Inhalte nur mit Erlaubnis teilen",
-  q2: "Ein privater Chat/Screenshot wird in den Klassenchat gestellt.",
-  q3: "Speicherung, Screenshot/Weitergabe, größerer Empfängerkreis, Kontextverlust, Kontrollverlust.",
-  q4: "Private Unsicherheit wird offengelegt; Tom verliert Kontrolle über die Information; Vertrauen kann beschädigt werden.",
-  q5: "Screenshot löschen, entschuldigen, privat klären und private Inhalte künftig nur mit Erlaubnis teilen."
-};
+  q1: "Ein privater Chat/Screenshot wird in den Klassenchat gestellt.",
+  q2: "Speicherung, Screenshot/Weitergabe, größerer Empfängerkreis, Kontextverlust, Kontrollverlust.",
+  q3: "Private Unsicherheit wird offengelegt; Tom verliert Kontrolle über die Information; Vertrauen kann beschädigt werden.",
+  q4: "Screenshot löschen, entschuldigen, privat klären und private Inhalte künftig nur mit Erlaubnis teilen."};
 
 function getInitialGroupId() {
   const params = new URLSearchParams(window.location.search);
@@ -51,12 +50,28 @@ function safeWrite(groupId, data) {
   }
 }
 
+function emptyAnswerForQuestion(question) {
+  if (question.type === "message-select" || question.type === "property-select") {
+    return [];
+  }
+
+  return "";
+}
+
 function emptyAnswersFor(caseData) {
   const answers = {};
   caseData.questions.forEach((question) => {
-    answers[question.id] = "";
+    answers[question.id] = emptyAnswerForQuestion(question);
   });
   return answers;
+}
+
+function isAnswerFilled(answer) {
+  if (Array.isArray(answer)) {
+    return answer.length > 0;
+  }
+
+  return String(answer ?? "").trim().length > 0;
 }
 
 function splitIntoPages(questions) {
@@ -80,7 +95,13 @@ function formatTime(isoString) {
 }
 
 function answerText(savedGroup, questionId) {
-  return savedGroup?.answers?.[questionId]?.trim() || "Noch keine Antwort gespeichert.";
+  const answer = savedGroup?.answers?.[questionId];
+
+  if (Array.isArray(answer)) {
+    return answer.length > 0 ? answer.join("\n") : "Noch keine Antwort gespeichert.";
+  }
+
+  return String(answer ?? "").trim() || "Noch keine Antwort gespeichert.";
 }
 
 async function postJson(url, payload) {
@@ -119,8 +140,14 @@ function decodeAnswerCode(code) {
   }
 
   const answers = {};
-  for (const questionId of ["q1", "q2", "q3", "q4", "q5", "q6"]) {
-    answers[questionId] = String(payload.answers?.[questionId] ?? "");
+  for (const questionId of ["q1", "q2", "q3", "q4"]) {
+    const rawAnswer = payload.answers?.[questionId];
+
+    if (Array.isArray(rawAnswer)) {
+      answers[questionId] = rawAnswer.map((entry) => String(entry));
+    } else {
+      answers[questionId] = String(rawAnswer ?? "");
+    }
   }
 
   const now = new Date().toISOString();
@@ -215,8 +242,7 @@ function StudentView({ groupId, onSwitchGroup }) {
   const [saveError, setSaveError] = useState(false);
   const [serverSaveState, setServerSaveState] = useState("idle");
 
-  const answeredCount = Object.values(answers).filter((answer) => answer.trim().length > 0).length;
-  const totalCount = caseData.questions.length;
+  const answeredCount = Object.values(answers).filter(isAnswerFilled).length;const totalCount = caseData.questions.length;
   const isLastPage = pageIndex === pages.length - 1;
 
   useEffect(() => {
@@ -394,7 +420,7 @@ function TeacherStatusCards({ answersData, selectedGroupId, onSelectGroup }) {
               </strong>
             </div>
             <h3>{caseData.title}</h3>
-            <p>{answeredCount}/6 Antworten · zuletzt: {formatTime(savedGroup?.receivedAt || savedGroup?.savedAt)}</p>
+            <p>{answeredCount}/{caseData.questions.length} Antworten · zuletzt: {formatTime(savedGroup?.receivedAt || savedGroup?.savedAt)}</p>
           </button>
         );
       })}
@@ -439,10 +465,10 @@ function CompactOverviewTable({ answersData }) {
       id: "entry",
       label: ENTRY_CASE.groupName,
       title: ENTRY_CASE.title,
+      q1: ENTRY_CASE.q1,
       q2: ENTRY_CASE.q2,
       q3: ENTRY_CASE.q3,
-      q4: ENTRY_CASE.q4,
-      q5: ENTRY_CASE.q5
+      q4: ENTRY_CASE.q4
     },
     ...getAllCaseIds().map((id) => {
       const caseData = CASES[id];
@@ -451,10 +477,10 @@ function CompactOverviewTable({ answersData }) {
         id,
         label: caseData.groupName,
         title: caseData.title,
+        q1: answerText(savedGroup, "q1"),
         q2: answerText(savedGroup, "q2"),
         q3: answerText(savedGroup, "q3"),
-        q4: answerText(savedGroup, "q4"),
-        q5: answerText(savedGroup, "q5")
+        q4: answerText(savedGroup, "q4")
       };
     })
   ];
@@ -479,10 +505,10 @@ function CompactOverviewTable({ answersData }) {
                   <span>{row.label}</span>
                   <small>{row.title}</small>
                 </th>
+                <td>{row.q1}</td>
                 <td>{row.q2}</td>
                 <td>{row.q3}</td>
                 <td>{row.q4}</td>
-                <td>{row.q5}</td>
               </tr>
             ))}
           </tbody>

@@ -1,3 +1,47 @@
+const DIGITAL_PROPERTIES = [
+  "Nachrichten bleiben gespeichert.",
+  "Nachrichten, Bilder oder Links können schnell weitergeleitet werden.",
+  "Viele können mitlesen.",
+  "Man verliert schnell die Kontrolle darüber, wer eine Information sieht.",
+  "Mimik, Tonfall und Situation fehlen oft.",
+  "Nachrichten können jederzeit kommen und Druck erzeugen."
+];
+
+function createInternetCompassQuestions() {
+  return [
+    {
+      id: "q1",
+      type: "message-select",
+      label: "Welche Stelle im Chat ist der Knackpunkt?",
+      helper: "Klickt die Nachricht an, bei der die Situation problematisch wird. Ihr könnt höchstens zwei Nachrichten auswählen.",
+      maxSelections: 2
+    },
+    {
+      id: "q2",
+      type: "property-select",
+      label: "Welche Eigenschaft digitaler Kommunikation spielt hier eine Rolle?",
+      helper: "Wählt höchstens zwei Eigenschaften aus.",
+      maxSelections: 2,
+      options: DIGITAL_PROPERTIES
+    },
+    {
+      id: "q3",
+      type: "text",
+      label: "Welche Folgen kann das haben?",
+      helper: "Überlegt, was für einzelne Personen oder für die Klasse passieren kann.",
+      placeholder: "Das kann dazu führen, dass ..."
+    },
+    {
+      id: "q4",
+      type: "text",
+      label: "Was sollten die beteiligten Personen jetzt tun?",
+      helper: "Formuliert eine verantwortungsvolle Reaktion.",
+      placeholder: "Verantwortungsvoll wäre jetzt ..."
+    }
+  ];
+}
+
+
 export const CASES = {
   "1": {
     groupName: "Gruppe 1",
@@ -13,44 +57,7 @@ export const CASES = {
       { sender: "Mia", time: "15:24", text: "Auf der Schulhomepage steht aber nichts." },
       { sender: "Luca", time: "15:24", text: "Keine Ahnung, ich wollte euch nur warnen." }
     ],
-    questions: [
-      {
-        id: "q1",
-        label: "1. Was passiert im Chat?",
-        helper: "Beschreibt kurz die Situation.",
-        placeholder: "Zum Beispiel: Luca schreibt, dass ..."
-      },
-      {
-        id: "q2",
-        label: "2. Welche Handlung ist problematisch?",
-        helper: "Wählt nicht einfach eine Person aus, sondern beschreibt die konkrete Handlung.",
-        placeholder: "Problematisch ist, dass ..."
-      },
-      {
-        id: "q3",
-        label: "3. Welche Eigenschaft digitaler Kommunikation spielt hier eine Rolle?",
-        helper: "Denkt an die Vorstunde: z. B. schnelles Weiterleiten, großer Empfängerkreis, Speicherung, fehlender Kontext ...",
-        placeholder: "Eine wichtige Eigenschaft ist ..."
-      },
-      {
-        id: "q4",
-        label: "4. Welche Folgen kann das haben?",
-        helper: "Überlegt für einzelne Personen und für die ganze Klasse.",
-        placeholder: "Das kann dazu führen, dass ..."
-      },
-      {
-        id: "q5",
-        label: "5. Wie sollten die beteiligten Personen jetzt verantwortungsvoll reagieren?",
-        helper: "Was sollte man jetzt tun, um die Situation zu klären oder Schaden zu vermeiden?",
-        placeholder: "Verantwortungsvoll wäre jetzt ..."
-      },
-      {
-        id: "q6",
-        label: "6. Welche Stichwörter sind für eure spätere Vorstellung besonders wichtig?",
-        helper: "Notiert 3–5 Stichwörter. Keine ganze Präsentation schreiben.",
-        placeholder: "z. B. prüfen, Quelle, weiterleiten ..."
-      }
-    ]
+    questions: createInternetCompassQuestions()
   },
 
   "2": {
@@ -67,44 +74,7 @@ export const CASES = {
       { sender: "Noah", time: "18:07", text: "Ich bekomme die ganze Zeit Benachrichtigungen 😑" },
       { sender: "Emir", time: "18:08", text: "Dann stellt halt lautlos. Ich brauche es jetzt." }
     ],
-    questions: [
-      {
-        id: "q1",
-        label: "1. Was passiert im Chat?",
-        helper: "Beschreibt kurz die Situation.",
-        placeholder: "Zum Beispiel: Emir ..."
-      },
-      {
-        id: "q2",
-        label: "2. Welche Handlung ist problematisch?",
-        helper: "Achtet darauf, was im digitalen Chat anders wirkt als in einem einzelnen Gespräch.",
-        placeholder: "Problematisch ist, dass ..."
-      },
-      {
-        id: "q3",
-        label: "3. Welche Eigenschaft digitaler Kommunikation spielt hier eine Rolle?",
-        helper: "Denkt an Dauerverfügbarkeit, Push-Nachrichten, Gruppendruck, Empfängerkreis ...",
-        placeholder: "Eine wichtige Eigenschaft ist ..."
-      },
-      {
-        id: "q4",
-        label: "4. Welche Folgen kann das haben?",
-        helper: "Überlegt für die angeschriebenen Personen und für die Stimmung im Klassenchat.",
-        placeholder: "Das kann dazu führen, dass ..."
-      },
-      {
-        id: "q5",
-        label: "5. Wie sollten die beteiligten Personen jetzt verantwortungsvoll reagieren?",
-        helper: "Was wäre eine faire und rücksichtsvolle Reaktion?",
-        placeholder: "Verantwortungsvoll wäre jetzt ..."
-      },
-      {
-        id: "q6",
-        label: "6. Welche Stichwörter sind für eure spätere Vorstellung besonders wichtig?",
-        helper: "Notiert 3–5 Stichwörter. Keine ganze Präsentation schreiben.",
-        placeholder: "z. B. Antwortdruck, Benachrichtigungen ..."
-      }
-    ]
+    questions: createInternetCompassQuestions()
   },
 
   "3": {
@@ -121,44 +91,7 @@ export const CASES = {
       { sender: "Max", time: "16:15", text: "Ich meinte nur, dass du die Folien immer gut machst." },
       { sender: "Paula", time: "16:16", text: "Dann schreib das doch normal ..." }
     ],
-    questions: [
-      {
-        id: "q1",
-        label: "1. Was passiert im Chat?",
-        helper: "Beschreibt kurz die Situation.",
-        placeholder: "Zum Beispiel: Max schreibt ..."
-      },
-      {
-        id: "q2",
-        label: "2. Welche Handlung ist problematisch?",
-        helper: "Überlegt, warum die Nachricht anders verstanden werden konnte.",
-        placeholder: "Problematisch ist, dass ..."
-      },
-      {
-        id: "q3",
-        label: "3. Welche Eigenschaft digitaler Kommunikation spielt hier eine Rolle?",
-        helper: "Denkt an fehlende Mimik, fehlenden Tonfall, Ironie, Mehrdeutigkeit, Kontext ...",
-        placeholder: "Eine wichtige Eigenschaft ist ..."
-      },
-      {
-        id: "q4",
-        label: "4. Welche Folgen kann das haben?",
-        helper: "Überlegt, wie sich Missverständnisse in einem Chat entwickeln können.",
-        placeholder: "Das kann dazu führen, dass ..."
-      },
-      {
-        id: "q5",
-        label: "5. Wie sollten die beteiligten Personen jetzt verantwortungsvoll reagieren?",
-        helper: "Was könnten Max, Paula oder die anderen schreiben?",
-        placeholder: "Verantwortungsvoll wäre jetzt ..."
-      },
-      {
-        id: "q6",
-        label: "6. Welche Stichwörter sind für eure spätere Vorstellung besonders wichtig?",
-        helper: "Notiert 3–5 Stichwörter. Keine ganze Präsentation schreiben.",
-        placeholder: "z. B. Ironie, Tonfall, nachfragen ..."
-      }
-    ]
+    questions: createInternetCompassQuestions()
   },
 
   "4": {
@@ -175,44 +108,7 @@ export const CASES = {
       { sender: "Ben", time: "19:35", text: "Entspann dich, war doch nur Spaß." },
       { sender: "Sara", time: "19:36", text: "Felix hat gesagt, er will das nicht. Dann lösch es doch." }
     ],
-    questions: [
-      {
-        id: "q1",
-        label: "1. Was passiert im Chat?",
-        helper: "Beschreibt kurz die Situation.",
-        placeholder: "Zum Beispiel: Ben ..."
-      },
-      {
-        id: "q2",
-        label: "2. Welche Handlung ist problematisch?",
-        helper: "Beschreibt die konkrete Handlung im Chat.",
-        placeholder: "Problematisch ist, dass ..."
-      },
-      {
-        id: "q3",
-        label: "3. Welche Eigenschaft digitaler Kommunikation spielt hier eine Rolle?",
-        helper: "Denkt an Öffentlichkeit in der Gruppe, Speicherung, Weiterleitung, Zuschauerrolle ...",
-        placeholder: "Eine wichtige Eigenschaft ist ..."
-      },
-      {
-        id: "q4",
-        label: "4. Welche Folgen kann das haben?",
-        helper: "Überlegt auch, was nach der Schule oder zuhause passieren kann.",
-        placeholder: "Das kann dazu führen, dass ..."
-      },
-      {
-        id: "q5",
-        label: "5. Wie sollten die beteiligten Personen jetzt verantwortungsvoll reagieren?",
-        helper: "Was sollten Ben, die Mitlesenden und Felix jetzt tun?",
-        placeholder: "Verantwortungsvoll wäre jetzt ..."
-      },
-      {
-        id: "q6",
-        label: "6. Welche Stichwörter sind für eure spätere Vorstellung besonders wichtig?",
-        helper: "Notiert 3–5 Stichwörter. Keine ganze Präsentation schreiben.",
-        placeholder: "z. B. Bild, löschen, unterstützen ..."
-      }
-    ]
+    questions: createInternetCompassQuestions()
   }
 };
 
