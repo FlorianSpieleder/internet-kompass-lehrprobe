@@ -1,0 +1,8 @@
+# Local Netlify folder
+node_modules/
+dist/
+.env
+.env.local
+.netlify/
+.idea/
+*.iml
