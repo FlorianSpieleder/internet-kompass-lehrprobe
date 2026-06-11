@@ -1,12 +1,25 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const STEP_LABELS = [
     "Knackpunkt",
     "Eigenschaften",
     "Folgen",
     "Handlung",
-    "Übersicht"
+    "Regel",
+    "Check",
 ];
+
+function progressIndexForPage(pageIndex, isOverviewPage) {
+    if (isOverviewPage) {
+        return STEP_LABELS.length;
+    }
+
+    if (pageIndex >= 5) {
+        return 5;
+    }
+
+    return pageIndex;
+}
 
 function encodeAnswerCode(payload) {
     const cleanPayload = {
@@ -89,8 +102,31 @@ function answerAsList(value) {
         return value;
     }
 
+    if (value && typeof value === "object") {
+        const rule = String(value.rule ?? "").trim();
+        const reason = String(value.reason ?? "").trim();
+
+        if (rule && reason) {
+            return [`Im Klassenchat gilt: ${rule}, weil ${reason}.`];
+        }
+
+        if (rule) {
+            return [`Im Klassenchat gilt: ${rule}.`];
+        }
+
+        if (reason) {
+            return [`Weil ${reason}.`];
+        }
+
+        return [];
+    }
+
     const text = String(value ?? "").trim();
     return text ? [text] : [];
+}
+
+function formatRuleSentence(value) {
+    return answerAsList(value)[0] ?? "Noch keine Regel formuliert.";
 }
 
 function PresentationAnswer({ question, value, index }) {
@@ -117,10 +153,18 @@ function PresentationAnswer({ question, value, index }) {
 }
 
 function StudentPresentationOverview({ caseData, answers }) {
+    const summaryQuestions = caseData.questions
+        .map((question, index) => ({ question, index }))
+        .filter(({ question }) => ["q2", "q3", "q4", "q5"].includes(question.id));
+
     return (
         <article className="student-summary">
+            <div className="student-summary-rule-notice">
+                Schreibt nun eure fertige Regel auf das Regelblatt.
+            </div>
+
             <div className="student-summary-grid">
-                {caseData.questions.map((question, index) => (
+                {summaryQuestions.map(({ question, index }) => (
                     <PresentationAnswer
                         key={question.id}
                         question={question}
@@ -177,11 +221,37 @@ function PropertySelectQuestion({ question, value, onChange }) {
     );
 }
 
+function QuestionLabel({ question }) {
+    if (question.labelParts?.name) {
+        return (
+            <>
+                {question.labelParts.beforeName}
+                <span className="question-highlight-name">{question.labelParts.name}</span>
+                {question.labelParts.afterName}
+            </>
+        );
+    }
+
+    return question.label;
+}
+
 function TextQuestion({ question, value, onChange }) {
     return (
         <article className="question-card">
-            <label htmlFor={question.id}>{question.label}</label>
+            <label htmlFor={question.id}>
+                <QuestionLabel question={question} />
+            </label>
             <p>{question.helper}</p>
+            {Array.isArray(question.criteria) && question.criteria.length > 0 && (
+                <div className="rule-criteria">
+                    <strong>{question.criteriaTitle ?? "Achtet darauf:"}</strong>
+                    <ul>
+                        {question.criteria.map((criterion) => (
+                            <li key={criterion}>{criterion}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
             <textarea
                 id={question.id}
                 value={typeof value === "string" ? value : ""}
@@ -193,7 +263,137 @@ function TextQuestion({ question, value, onChange }) {
     );
 }
 
-function QuestionRenderer({ question, caseData, value, onChange }) {
+function InlineEditableField({ value, onChange, placeholder, ariaLabel }) {
+    const fieldRef = useRef(null);
+
+    useEffect(() => {
+        const field = fieldRef.current;
+        if (!field || document.activeElement === field) return;
+
+        if (field.textContent !== value) {
+            field.textContent = value;
+        }
+    }, [value]);
+
+    function handlePaste(event) {
+        event.preventDefault();
+        const text = event.clipboardData.getData("text/plain");
+        document.execCommand("insertText", false, text);
+    }
+
+    return (
+        <span
+            ref={fieldRef}
+            className="rule-sentence-field"
+            contentEditable
+            role="textbox"
+            tabIndex={0}
+            aria-label={ariaLabel}
+            data-placeholder={placeholder}
+            suppressContentEditableWarning
+            onInput={(event) => onChange(event.currentTarget.textContent ?? "")}
+            onPaste={handlePaste}
+            onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                }
+            }}
+        />
+    );
+}
+
+function RuleSentenceFields({ value, onChange }) {
+    const ruleValue = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+    const rule = typeof ruleValue.rule === "string" ? ruleValue.rule : "";
+    const reason = typeof ruleValue.reason === "string" ? ruleValue.reason : "";
+
+    function updateField(field, fieldValue) {
+        onChange({
+            rule,
+            reason,
+            [field]: fieldValue
+        });
+    }
+
+    return (
+        <div className="rule-sentence-builder">
+            <span>Im Klassenchat gilt:</span>
+            <InlineEditableField
+                value={rule}
+                onChange={(nextValue) => updateField("rule", nextValue)}
+                placeholder="wir ..."
+                aria-label="Regel vervollständigen"
+            />
+            <span>, weil</span>
+            <InlineEditableField
+                value={reason}
+                onChange={(nextValue) => updateField("reason", nextValue)}
+                placeholder="..."
+                aria-label="Begründung vervollständigen"
+            />
+        </div>
+    );
+}
+
+function RuleSentenceQuestion({ question, value, onChange }) {
+    return (
+        <article className="question-card">
+            <h2>{question.label}</h2>
+            <p>{question.helper}</p>
+            <RuleSentenceFields
+                value={value}
+                onChange={(nextValue) => onChange(question.id, nextValue)}
+            />
+        </article>
+    );
+}
+
+function ChecklistQuestion({ question, value, ruleValue, onChange }) {
+    const selectedValues = Array.isArray(value) ? value : [];
+
+    function toggleOption(option) {
+        if (selectedValues.includes(option)) {
+            onChange(question.id, selectedValues.filter((entry) => entry !== option));
+            return;
+        }
+
+        onChange(question.id, [...selectedValues, option]);
+    }
+
+    return (
+        <article className="question-card checklist-card">
+            <h2>{question.label}</h2>
+            <p>{question.helper}</p>
+
+            <div className="rule-review-editor">
+                <strong>Eure Regel</strong>
+                <p>{formatRuleSentence(ruleValue)}</p>
+            </div>
+
+            <div className="checklist-options">
+                {question.options.map((option) => {
+                    const isSelected = selectedValues.includes(option);
+
+                    return (
+                        <label
+                            key={option}
+                            className={`checklist-option ${isSelected ? "is-selected" : ""}`}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleOption(option)}
+                            />
+                            <span>{option}</span>
+                        </label>
+                    );
+                })}
+            </div>
+        </article>
+    );
+}
+
+function QuestionRenderer({ question, caseData, value, answers, onChange }) {
     if (question.type === "message-select") {
         return (
             <MessageSelectQuestion
@@ -206,6 +406,27 @@ function QuestionRenderer({ question, caseData, value, onChange }) {
     if (question.type === "property-select") {
         return (
             <PropertySelectQuestion
+                question={question}
+                value={value}
+                onChange={onChange}
+            />
+        );
+    }
+
+    if (question.type === "checklist") {
+        return (
+            <ChecklistQuestion
+                question={question}
+                value={value}
+                ruleValue={answers.q5}
+                onChange={onChange}
+            />
+        );
+    }
+
+    if (question.type === "rule-sentence") {
+        return (
+            <RuleSentenceQuestion
                 question={question}
                 value={value}
                 onChange={onChange}
@@ -325,18 +546,26 @@ export default function QuestionSection({
                                             setHasReadChat,
                                             answers,
                                             updateAnswer,
-                                            isLastPage,
                                             handleFinalSave,
-                                            savedAt,
                                             saveError,
                                             serverSaveState,
                                         currentPayload
                                     }) {
     const pageCount = pages.length + 1;
     const isOverviewPage = pageIndex === pages.length;
-    const isSaveSuccess = serverSaveState === "server-success" || Boolean(savedAt);
+    const isLastQuestionPage = pageIndex === pages.length - 1;
+    const progressIndex = progressIndexForPage(pageIndex, isOverviewPage);
     const isSaving = serverSaveState === "saving";
     const [isEmergencyOpen, setIsEmergencyOpen] = useState(false);
+
+    async function handleNext() {
+        if (isLastQuestionPage) {
+            const didSave = await handleFinalSave();
+            if (!didSave) return;
+        }
+
+        setPageIndex((current) => Math.min(current + 1, pageCount - 1));
+    }
 
     if (!hasReadChat) {
         return (
@@ -364,8 +593,8 @@ export default function QuestionSection({
             </header>
 
             <Progress
-                pageIndex={pageIndex}
-                pageCount={pageCount}
+                pageIndex={progressIndex}
+                pageCount={STEP_LABELS.length}
             />
 
             {isOverviewPage ? (
@@ -381,6 +610,7 @@ export default function QuestionSection({
                             question={question}
                             caseData={caseData}
                             value={answers[question.id]}
+                            answers={answers}
                             onChange={updateAnswer}
                         />
                     ))}
@@ -404,20 +634,13 @@ export default function QuestionSection({
                     Technische Hilfe
                 </button>
 
-                {!isLastPage ? (
+                {!isOverviewPage && (
                     <button
                         className="primary-button"
-                        onClick={() => setPageIndex((current) => Math.min(current + 1, pageCount - 1))}
-                    >
-                        Weiter
-                    </button>
-                ) : (
-                    <button
-                        className={`save-button ${isSaveSuccess ? "is-saved" : ""}`}
-                        onClick={handleFinalSave}
+                        onClick={handleNext}
                         disabled={isSaving}
                     >
-                        {isSaving ? "Speichert ..." : isSaveSuccess ? "Gespeichert" : "Antworten speichern"}
+                        {isSaving ? "Speichert ..." : "Weiter"}
                     </button>
                 )}
             </footer>

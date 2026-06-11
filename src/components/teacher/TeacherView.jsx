@@ -13,8 +13,8 @@ const ENTRY_CASE = {
   q4: "Screenshot löschen, entschuldigen, privat klären und private Inhalte künftig nur mit Erlaubnis teilen."
 };
 
-const ARRAY_ANSWER_IDS = new Set(["q1", "q2"]);
-const ALL_ANSWER_IDS = ["q1", "q2", "q3", "q4"];
+const ARRAY_ANSWER_TYPES = new Set(["message-select", "property-select", "checklist"]);
+const RULE_SENTENCE_ANSWER_TYPE = "rule-sentence";
 const MAX_TEXT_ANSWER_LENGTH = 2500;
 const MAX_ARRAY_ANSWER_LENGTH = 250;
 
@@ -31,22 +31,60 @@ function normalizeArrayAnswer(value, maxEntries = 2) {
     .slice(0, maxEntries);
 }
 
-function normalizeAnswer(questionId, value) {
-  if (ARRAY_ANSWER_IDS.has(questionId)) {
-    return normalizeArrayAnswer(value);
+function normalizeAnswerForQuestion(question, value) {
+  if (ARRAY_ANSWER_TYPES.has(question?.type)) {
+    return normalizeArrayAnswer(value, question?.maxSelections ?? question?.options?.length ?? 2);
+  }
+
+  if (question?.type === RULE_SENTENCE_ANSWER_TYPE) {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      return {
+        rule: String(value.rule ?? "").slice(0, MAX_TEXT_ANSWER_LENGTH),
+        reason: String(value.reason ?? "").slice(0, MAX_TEXT_ANSWER_LENGTH)
+      };
+    }
+
+    return {
+      rule: String(value ?? "").slice(0, MAX_TEXT_ANSWER_LENGTH),
+      reason: ""
+    };
   }
 
   return String(value ?? "").slice(0, MAX_TEXT_ANSWER_LENGTH);
 }
 
-function normalizeAnswers(rawAnswers) {
+function formatRuleSentence(answer) {
+  if (!answer || typeof answer !== "object" || Array.isArray(answer)) {
+    return "";
+  }
+
+  const rule = String(answer.rule ?? "").trim();
+  const reason = String(answer.reason ?? "").trim();
+
+  if (rule && reason) {
+    return `Im Klassenchat gilt: ${rule}, weil ${reason}.`;
+  }
+
+  if (rule) {
+    return `Im Klassenchat gilt: ${rule}.`;
+  }
+
+  if (reason) {
+    return `Weil ${reason}.`;
+  }
+
+  return "";
+}
+
+function normalizeAnswersForCase(caseData, rawAnswers) {
   const source = rawAnswers && typeof rawAnswers === "object" ? rawAnswers : {};
-  return {
-    q1: normalizeAnswer("q1", source.q1),
-    q2: normalizeAnswer("q2", source.q2),
-    q3: normalizeAnswer("q3", source.q3),
-    q4: normalizeAnswer("q4", source.q4)
-  };
+  const answers = {};
+
+  caseData?.questions?.forEach((question) => {
+    answers[question.id] = normalizeAnswerForQuestion(question, source[question.id]);
+  });
+
+  return answers;
 }
 
 function normalizeSavedGroup(groupId, rawGroup) {
@@ -56,7 +94,7 @@ function normalizeSavedGroup(groupId, rawGroup) {
     groupId,
     title: String(rawGroup?.title ?? caseData?.title ?? ""),
     focus: String(rawGroup?.focus ?? caseData?.focus ?? ""),
-    answers: normalizeAnswers(rawGroup?.answers),
+    answers: normalizeAnswersForCase(caseData, rawGroup?.answers),
     savedAt: rawGroup?.savedAt || null,
     receivedAt: rawGroup?.receivedAt || rawGroup?.savedAt || null,
     importedAt: rawGroup?.importedAt || null,
@@ -83,6 +121,10 @@ function isAnswerFilled(answer) {
     return answer.length > 0;
   }
 
+  if (answer && typeof answer === "object") {
+    return Object.values(answer).some((entry) => String(entry ?? "").trim().length > 0);
+  }
+
   return String(answer ?? "").trim().length > 0;
 }
 
@@ -98,21 +140,36 @@ function formatTime(isoString) {
   }
 }
 
+function questionById(caseData, questionId) {
+  return caseData?.questions?.find((question) => question.id === questionId) ?? null;
+}
+
 function answerText(savedGroup, questionId) {
-  const answer = normalizeAnswer(questionId, savedGroup?.answers?.[questionId]);
+  const caseData = CASES[savedGroup?.groupId];
+  const question = questionById(caseData, questionId);
+  const answer = normalizeAnswerForQuestion(question, savedGroup?.answers?.[questionId]);
 
   if (Array.isArray(answer)) {
     return answer.length > 0 ? answer.join("\n") : "Noch keine Antwort gespeichert.";
   }
 
+  if (answer && typeof answer === "object") {
+    return formatRuleSentence(answer) || "Noch keine Antwort gespeichert.";
+  }
+
   return String(answer ?? "").trim() || "Noch keine Antwort gespeichert.";
 }
 
-function answerEntries(savedGroup, questionId) {
-  const answer = normalizeAnswer(questionId, savedGroup?.answers?.[questionId]);
+function answerEntries(savedGroup, question) {
+  const answer = normalizeAnswerForQuestion(question, savedGroup?.answers?.[question.id]);
 
   if (Array.isArray(answer)) {
     return answer.length > 0 ? answer : ["Noch keine Antwort gespeichert."];
+  }
+
+  if (answer && typeof answer === "object") {
+    const sentence = formatRuleSentence(answer);
+    return sentence ? [sentence] : ["Noch keine Antwort gespeichert."];
   }
 
   const text = String(answer ?? "").trim();
@@ -220,11 +277,7 @@ function decodeAnswerCode(code) {
     throw new Error("Der Code enthält keine gültige Gruppe.");
   }
 
-  const answers = {};
-  for (const questionId of ALL_ANSWER_IDS) {
-    const rawAnswer = payload.answers?.[questionId];
-    answers[questionId] = normalizeAnswer(questionId, rawAnswer);
-  }
+  const answers = normalizeAnswersForCase(CASES[groupId], payload.answers);
 
   const now = new Date().toISOString();
 
@@ -331,7 +384,7 @@ function TeacherStatusCards({ answersData, selectedGroupId, onSelectGroup }) {
         const caseData = CASES[id];
         const savedGroup = answersData.groups?.[id];
         const answeredCount = savedGroup
-          ? Object.values(normalizeAnswers(savedGroup.answers)).filter(isAnswerFilled).length
+          ? Object.values(normalizeAnswersForCase(caseData, savedGroup.answers)).filter(isAnswerFilled).length
           : 0;
 
         return (
@@ -356,7 +409,7 @@ function TeacherStatusCards({ answersData, selectedGroupId, onSelectGroup }) {
 }
 
 function TeacherAnswerCard({ question, savedGroup, index }) {
-  const entries = answerEntries(savedGroup, question.id);
+  const entries = answerEntries(savedGroup, question);
   const isMissing = !savedGroup || entries.every((entry) => entry === "Noch keine Antwort gespeichert.");
 
   return (
@@ -379,7 +432,7 @@ function GroupPresentationCard({ groupId, answersData, onBack }) {
   const caseData = CASES[groupId];
   const savedGroup = answersData.groups?.[groupId];
   const [isRevealed, setIsRevealed] = useState(false);
-  const selectedMessages = normalizeAnswer("q1", savedGroup?.answers?.q1);
+  const selectedMessages = normalizeAnswerForQuestion(questionById(caseData, "q1"), savedGroup?.answers?.q1);
 
   useEffect(() => {
     setIsRevealed(false);
@@ -417,7 +470,7 @@ function GroupPresentationCard({ groupId, answersData, onBack }) {
           ) : (
             <div className="teacher-presentation-grid">
               {caseData.questions
-                .filter((question) => question.id !== "q1")
+                .filter((question) => ["q2", "q3", "q4"].includes(question.id))
                 .map((question, index) => (
                   <TeacherAnswerCard
                     key={question.id}

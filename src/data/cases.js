@@ -7,7 +7,15 @@ const DIGITAL_PROPERTIES = [
   "Nachrichten können jederzeit kommen und Druck erzeugen."
 ];
 
-function createInternetCompassQuestions() {
+const RULE_CHECKLIST = [
+  "Unsere Regel ist allgemein formuliert und nicht nur eine Wiederholung der Handlung aus Frage 4.",
+  "Unsere Regel nennt ein konkretes verantwortungsvolles Verhalten.",
+  "Unsere Regel berücksichtigt die Folgen digitaler Kommunikation.",
+  "Unsere Regel ist verständlich und kurz genug für eine Klassenregel.",
+  "Unsere Regel hilft, bevor ein Schaden entsteht oder größer wird."
+];
+
+function createInternetCompassQuestions(actionName) {
   return [
     {
       id: "q1",
@@ -34,9 +42,29 @@ function createInternetCompassQuestions() {
     {
       id: "q4",
       type: "text",
-      label: "Was sollten die beteiligten Personen jetzt tun?",
-      helper: "Formuliert eine verantwortungsvolle Reaktion.",
-      placeholder: "Verantwortungsvoll wäre jetzt ..."
+      label: `Erklärt, was ${actionName} in diesem Fall anders hätte machen sollen.`,
+      labelParts: {
+        beforeName: "Erklärt, was ",
+        name: actionName,
+        afterName: " in diesem Fall anders hätte machen sollen."
+      },
+      helper: "Beschreibt die konkrete verantwortungsvolle Handlung in genau diesem Fall. Die allgemeine Regel kommt erst danach.",
+      placeholder: `${actionName} hätte ...`
+    },
+    {
+      id: "q5",
+      type: "rule-sentence",
+      label: "Welche Klassenchat-Regel entsteht aus eurem Fall?",
+      helper: "Formuliert aus eurer Handlung eine Regel für den Klassenchat. Die Regel soll auch für ähnliche Situationen gelten und anhand der digitalen Eigenschaft erklären, warum die Regel wichtig ist.",
+      rulePlaceholder: "wir ...",
+      reasonPlaceholder: "..."
+    },
+    {
+      id: "q6",
+      type: "checklist",
+      label: "Überprüft eure Regel mit der Checkliste",
+      helper: "Kreuzt an, welche Punkte eure Regel schon erfüllt. Wenn etwas fehlt, geht zurück und verbessert Frage 5.",
+      options: RULE_CHECKLIST
     }
   ];
 }
@@ -49,30 +77,36 @@ export const CASES = {
     focus: "Informationen prüfen, bevor man sie weiterleitet",
     chatImage: "/chatbilder/gruppe-1.png",
     studentChat: [
-      { sender: "Luca", time: "15:21", text: "Leute, morgen werden angeblich alle Handys eingesammelt!" },
-      { sender: "Mia", time: "15:22", text: "Was? Woher weißt du das?" },
-      { sender: "Luca", time: "15:22", text: "Ben hat das gesagt. Der hat so einen Artikel gesehen." },
-      { sender: "Sina", time: "15:23", text: "Welcher Ben? Ich kenne keinen Ben aus unserer Klasse." },
-      { sender: "Jonas", time: "15:23", text: "Ich bring dann morgen ein altes Zweithandy zum Abgeben 😂" },
-      { sender: "Mia", time: "15:24", text: "Auf der Schulhomepage steht aber nichts." },
-      { sender: "Luca", time: "15:24", text: "Keine Ahnung, ich wollte euch nur warnen." }
+      { sender: "Nina", time: "15:34", text: "Ich hab die Bilder jetzt in die Präsentation eingefügt." },
+      { sender: "Max", time: "15:35", text: "Nice, danke." },
+      { sender: "Jonas", time: "15:36", text: "Endlich bewegt sich hier mal was 😅" },
+      { sender: "Ben", time: "15:37", text: "Soll das heißen, wir anderen machen nichts?" },
+      { sender: "Nina", time: "15:38", text: "Ich war mir auch kurz nicht sicher, wie du das meinst." },
+      { sender: "Jonas", time: "15:39", text: "Nein, so war das nicht gemeint." },
+      { sender: "Max", time: "15:40", text: "Kam halt bisschen wie ein Vorwurf rüber." },
+      { sender: "Sara", time: "15:41", text: "Warte, vielleicht meinte Jonas es anders." }
     ],
+
     overviewChat: [
-      { sender: "Luca", time: "15:21", text: "Leute, morgen werden angeblich alle Handys eingesammelt!" },
-      { sender: "Mia", time: "15:22", text: "Was? Woher weißt du das?" },
-      { sender: "Luca", time: "15:22", text: "Ben hat das gesagt. Der hat so einen Artikel gesehen." },
-      { sender: "Mia", time: "15:24", text: "Auf der Schulhomepage steht aber nichts." }
+      { sender: "Nina", time: "15:34", text: "Ich hab die Bilder jetzt in die Präsentation eingefügt." },
+      { sender: "Max", time: "15:35", text: "Nice, danke." },
+      { sender: "Jonas", time: "15:36", text: "Endlich bewegt sich hier mal was 😅" },
+      { sender: "Ben", time: "15:37", text: "Soll das heißen, wir anderen machen nichts?" },
+      { sender: "Nina", time: "15:38", text: "Ich war mir auch kurz nicht sicher, wie du das meinst." },
+      { sender: "Jonas", time: "15:39", text: "Nein, so war das nicht gemeint." }
     ],
+
     fallbackChat: [
-      { sender: "Luca", time: "15:21", text: "Leute, morgen werden angeblich alle Handys eingesammelt!" },
-      { sender: "Mia", time: "15:22", text: "Was? Woher weißt du das?" },
-      { sender: "Luca", time: "15:22", text: "Ben hat das gesagt. Der hat so einen Artikel gesehen." },
-      { sender: "Sina", time: "15:23", text: "Welcher Ben? Ich kenne keinen Ben aus unserer Klasse." },
-      { sender: "Jonas", time: "15:23", text: "Ich bring dann morgen ein altes Zweithandy zum Abgeben 😂" },
-      { sender: "Mia", time: "15:24", text: "Auf der Schulhomepage steht aber nichts." },
-      { sender: "Luca", time: "15:24", text: "Keine Ahnung, ich wollte euch nur warnen." }
+      { sender: "Nina", time: "15:34", text: "Ich hab die Bilder jetzt in die Präsentation eingefügt." },
+      { sender: "Max", time: "15:35", text: "Nice, danke." },
+      { sender: "Jonas", time: "15:36", text: "Endlich bewegt sich hier mal was 😅" },
+      { sender: "Ben", time: "15:37", text: "Soll das heißen, wir anderen machen nichts?" },
+      { sender: "Nina", time: "15:38", text: "Ich war mir auch kurz nicht sicher, wie du das meinst." },
+      { sender: "Jonas", time: "15:39", text: "Nein, so war das nicht gemeint." },
+      { sender: "Max", time: "15:40", text: "Kam halt bisschen wie ein Vorwurf rüber." },
+      { sender: "Sara", time: "15:41", text: "Warte, vielleicht meinte Jonas es anders." }
     ],
-    questions: createInternetCompassQuestions()
+    questions: createInternetCompassQuestions("Jonas")
   },
 
   "2": {
@@ -81,30 +115,36 @@ export const CASES = {
     focus: "Rücksichtsvoll schreiben und keinen Antwortdruck erzeugen",
     chatImage: "/chatbilder/gruppe-2.png",
     studentChat: [
-      { sender: "Emir", time: "18:03", text: "Kann jemand schnell die Mathe-Hausaufgabe schicken?" },
-      { sender: "Emir", time: "18:04", text: "Hallo???" },
-      { sender: "Emir", time: "18:05", text: "Warum antwortet niemand?" },
-      { sender: "Lea", time: "18:06", text: "Ich esse gerade." },
-      { sender: "Emir", time: "18:06", text: "Dauert 10 Sekunden. Schick einfach." },
-      { sender: "Noah", time: "18:07", text: "Ich bekomme die ganze Zeit Benachrichtigungen 😑" },
-      { sender: "Emir", time: "18:08", text: "Dann stellt halt lautlos. Ich brauche es jetzt." }
+      { sender: "Luca", time: "16:18", text: "Leute, ab morgen werden bei uns angeblich alle Handys morgens eingesammelt 😳" },
+      { sender: "Mia", time: "16:19", text: "Was? Woher weißt du das?" },
+      { sender: "Luca", time: "16:20", text: "Hab gerade einen Artikel gesehen: „Handyverbot an Schulen – was sich bald ändern könnte“." },
+      { sender: "Ben", time: "16:21", text: "Aber steht da wirklich, dass das morgen bei uns passiert?" },
+      { sender: "Luca", time: "16:22", text: "Keine Ahnung, hab nur die Überschrift gelesen. Klingt aber schon so." },
+      { sender: "Nico", time: "16:23", text: "Ich schick’s mal in die Fußballgruppe, dann wissen es wenigstens alle." },
+      { sender: "Sara", time: "16:24", text: "Auf der Schulhomepage steht gar nichts dazu." },
+      { sender: "Mia", time: "16:25", text: "Dann ist das vielleicht noch gar nicht sicher." }
     ],
+
     overviewChat: [
-      { sender: "Emir", time: "18:03", text: "Kann jemand schnell die Mathe-Hausaufgabe schicken?" },
-      { sender: "Emir", time: "18:04", text: "Hallo???" },
-      { sender: "Lea", time: "18:06", text: "Ich esse gerade." },
-      { sender: "Emir", time: "18:06", text: "Dauert 10 Sekunden. Schick einfach." }
+      { sender: "Luca", time: "16:18", text: "Leute, ab morgen werden bei uns angeblich alle Handys morgens eingesammelt 😳" },
+      { sender: "Luca", time: "16:20", text: "Hab gerade einen Artikel gesehen: „Handyverbot an Schulen – was sich bald ändern könnte“." },
+      { sender: "Ben", time: "16:21", text: "Aber steht da wirklich, dass das morgen bei uns passiert?" },
+      { sender: "Luca", time: "16:22", text: "Keine Ahnung, hab nur die Überschrift gelesen. Klingt aber schon so." },
+      { sender: "Nico", time: "16:23", text: "Ich schick’s mal in die Fußballgruppe, dann wissen es wenigstens alle." },
+      { sender: "Sara", time: "16:24", text: "Auf der Schulhomepage steht gar nichts dazu." }
     ],
+
     fallbackChat: [
-      { sender: "Emir", time: "18:03", text: "Kann jemand schnell die Mathe-Hausaufgabe schicken?" },
-      { sender: "Emir", time: "18:04", text: "Hallo???" },
-      { sender: "Emir", time: "18:05", text: "Warum antwortet niemand?" },
-      { sender: "Lea", time: "18:06", text: "Ich esse gerade." },
-      { sender: "Emir", time: "18:06", text: "Dauert 10 Sekunden. Schick einfach." },
-      { sender: "Noah", time: "18:07", text: "Ich bekomme die ganze Zeit Benachrichtigungen 😑" },
-      { sender: "Emir", time: "18:08", text: "Dann stellt halt lautlos. Ich brauche es jetzt." }
+      { sender: "Luca", time: "16:18", text: "Leute, ab morgen werden bei uns angeblich alle Handys morgens eingesammelt 😳" },
+      { sender: "Mia", time: "16:19", text: "Was? Woher weißt du das?" },
+      { sender: "Luca", time: "16:20", text: "Hab gerade einen Artikel gesehen: „Handyverbot an Schulen – was sich bald ändern könnte“." },
+      { sender: "Ben", time: "16:21", text: "Aber steht da wirklich, dass das morgen bei uns passiert?" },
+      { sender: "Luca", time: "16:22", text: "Keine Ahnung, hab nur die Überschrift gelesen. Klingt aber schon so." },
+      { sender: "Nico", time: "16:23", text: "Ich schick’s mal in die Fußballgruppe, dann wissen es wenigstens alle." },
+      { sender: "Sara", time: "16:24", text: "Auf der Schulhomepage steht gar nichts dazu." },
+      { sender: "Mia", time: "16:25", text: "Dann ist das vielleicht noch gar nicht sicher." }
     ],
-    questions: createInternetCompassQuestions()
+    questions: createInternetCompassQuestions("Luca")
   },
 
   "3": {
@@ -113,30 +153,37 @@ export const CASES = {
     focus: "Bei unklaren Nachrichten nachfragen, bevor man urteilt",
     chatImage: "/chatbilder/gruppe-3.png",
     studentChat: [
-      { sender: "Paula", time: "16:12", text: "Ich schicke gleich meine Folie für die Gruppenarbeit." },
-      { sender: "Max", time: "16:13", text: "Na endlich, unsere Rettung 🙄" },
-      { sender: "Paula", time: "16:14", text: "Okay, wenn du es so schlimm findest, mach ich halt gar nichts mehr." },
-      { sender: "Max", time: "16:14", text: "Hä? Das war nicht böse gemeint." },
-      { sender: "Leni", time: "16:15", text: "Klang aber schon fies." },
-      { sender: "Max", time: "16:15", text: "Ich meinte nur, dass du die Folien immer gut machst." },
-      { sender: "Paula", time: "16:16", text: "Dann schreib das doch normal ..." }
+      { sender: "Emir", time: "18:42", text: "Lea, kannst du bitte noch die Bilder für unser Plakat schicken?" },
+      { sender: "Lea", time: "18:43", text: "Mach ich später, bin gerade beim Essen." },
+      { sender: "Nico", time: "18:46", text: "Lea?" },
+      { sender: "Nico", time: "18:48", text: "Wir brauchen die Bilder halt heute noch." },
+      { sender: "Tom", time: "18:49", text: "@Lea bitte antworte mal." },
+      { sender: "Nico", time: "18:51", text: "Du bist doch online." },
+      { sender: "Nico", time: "18:52", text: "Warum liest du es und antwortest nicht?" },
+      { sender: "Mia", time: "18:53", text: "Sie hat doch geschrieben, dass sie später antwortet." }
     ],
+
     overviewChat: [
-      { sender: "Paula", time: "16:12", text: "Ich schicke gleich meine Folie für die Gruppenarbeit." },
-      { sender: "Max", time: "16:13", text: "Na endlich, unsere Rettung 🙄" },
-      { sender: "Paula", time: "16:14", text: "Okay, wenn du es so schlimm findest, mach ich halt gar nichts mehr." },
-      { sender: "Max", time: "16:14", text: "Hä? Das war nicht böse gemeint." }
+      { sender: "Emir", time: "18:42", text: "Lea, kannst du bitte noch die Bilder für unser Plakat schicken?" },
+      { sender: "Lea", time: "18:43", text: "Mach ich später, bin gerade beim Essen." },
+      { sender: "Nico", time: "18:48", text: "Wir brauchen die Bilder halt heute noch." },
+      { sender: "Tom", time: "18:49", text: "@Lea bitte antworte mal." },
+      { sender: "Nico", time: "18:51", text: "Du bist doch online." },
+      { sender: "Nico", time: "18:52", text: "Warum liest du es und antwortest nicht?" },
+      { sender: "Mia", time: "18:53", text: "Sie hat doch geschrieben, dass sie später antwortet." }
     ],
+
     fallbackChat: [
-      { sender: "Paula", time: "16:12", text: "Ich schicke gleich meine Folie für die Gruppenarbeit." },
-      { sender: "Max", time: "16:13", text: "Na endlich, unsere Rettung 🙄" },
-      { sender: "Paula", time: "16:14", text: "Okay, wenn du es so schlimm findest, mach ich halt gar nichts mehr." },
-      { sender: "Max", time: "16:14", text: "Hä? Das war nicht böse gemeint." },
-      { sender: "Leni", time: "16:15", text: "Klang aber schon fies." },
-      { sender: "Max", time: "16:15", text: "Ich meinte nur, dass du die Folien immer gut machst." },
-      { sender: "Paula", time: "16:16", text: "Dann schreib das doch normal ..." }
+      { sender: "Emir", time: "18:42", text: "Lea, kannst du bitte noch die Bilder für unser Plakat schicken?" },
+      { sender: "Lea", time: "18:43", text: "Mach ich später, bin gerade beim Essen." },
+      { sender: "Nico", time: "18:46", text: "Lea?" },
+      { sender: "Nico", time: "18:48", text: "Wir brauchen die Bilder halt heute noch." },
+      { sender: "Tom", time: "18:49", text: "@Lea bitte antworte mal." },
+      { sender: "Nico", time: "18:51", text: "Du bist doch online." },
+      { sender: "Nico", time: "18:52", text: "Warum liest du es und antwortest nicht?" },
+      { sender: "Mia", time: "18:53", text: "Sie hat doch geschrieben, dass sie später antwortet." }
     ],
-    questions: createInternetCompassQuestions()
+    questions: createInternetCompassQuestions("Nico")
   },
 
   "4": {
@@ -145,31 +192,39 @@ export const CASES = {
     focus: "Nicht mitmachen, Betroffene unterstützen, stoppen oder Hilfe holen",
     chatImage: "/chatbilder/gruppe-4.png",
     studentChat: [
-      { sender: "Ben", time: "19:31", text: "Habt ihr gesehen, wie sich Felix heute beim Sport hingelegt hat? 😂" },
-      { sender: "Ben", time: "19:32", text: "Ich hab ein Bild davon gemacht." },
-      { sender: "Ben", time: "19:32", text: "Bild wurde gesendet." },
-      { sender: "Timo", time: "19:33", text: "Haha der Gesichtsausdruck 😂" },
-      { sender: "Felix", time: "19:34", text: "Lösch das bitte. Ist nicht lustig." },
-      { sender: "Ben", time: "19:35", text: "Entspann dich, war doch nur Spaß." },
-      { sender: "Sara", time: "19:36", text: "Felix hat gesagt, er will das nicht. Dann lösch es doch." }
+      { sender: "Luca", time: "15:47", text: "Sport heute war zu lustig 😂" },
+      { sender: "Nico", time: "15:48", text: "Vor allem Tims Schuss komplett am Tor vorbei." },
+      { sender: "Ben", time: "15:48", text: "Tim einfach Kreisliga-Legende 😂" },
+      { sender: "Luca", time: "15:49", text: "Morgen bitte wieder so, war Highlight des Tages." },
+      { sender: "Tim", time: "15:50", text: "Könnt ihr aufhören? War mir eh schon peinlich." },
+      { sender: "Nico", time: "15:51", text: "Bro, war doch nur Spaß." },
+      { sender: "Ben", time: "15:52", text: "Chill, ist doch nur unser Klassenchat." },
+      { sender: "Tim", time: "15:53", text: "Ja, aber ich bin jetzt zuhause und bekomme trotzdem noch Nachrichten dazu." },
+      { sender: "Mia", time: "15:54", text: "Leute, Tim meint das ernst." }
     ],
+
     overviewChat: [
-      { sender: "Ben", time: "19:31", text: "Habt ihr gesehen, wie sich Felix heute beim Sport hingelegt hat? 😂" },
-      { sender: "Ben", time: "19:32", text: "Ich hab ein Bild davon gemacht." },
-      { sender: "Ben", time: "19:32", text: "Bild wurde gesendet." },
-      { sender: "Felix", time: "19:34", text: "Lösch das bitte. Ist nicht lustig." },
-      { sender: "Sara", time: "19:36", text: "Felix hat gesagt, er will das nicht. Dann lösch es doch." }
+      { sender: "Nico", time: "15:48", text: "Vor allem Tims Schuss komplett am Tor vorbei." },
+      { sender: "Ben", time: "15:48", text: "Tim einfach Kreisliga-Legende 😂" },
+      { sender: "Tim", time: "15:50", text: "Könnt ihr aufhören? War mir eh schon peinlich." },
+      { sender: "Nico", time: "15:51", text: "Bro, war doch nur Spaß." },
+      { sender: "Ben", time: "15:52", text: "Chill, ist doch nur unser Klassenchat." },
+      { sender: "Tim", time: "15:53", text: "Ja, aber ich bin jetzt zuhause und bekomme trotzdem noch Nachrichten dazu." },
+      { sender: "Mia", time: "15:54", text: "Leute, Tim meint das ernst." }
     ],
+
     fallbackChat: [
-      { sender: "Ben", time: "19:31", text: "Habt ihr gesehen, wie sich Felix heute beim Sport hingelegt hat? 😂" },
-      { sender: "Ben", time: "19:32", text: "Ich hab ein Bild davon gemacht." },
-      { sender: "Ben", time: "19:32", text: "Bild wurde gesendet." },
-      { sender: "Timo", time: "19:33", text: "Haha der Gesichtsausdruck 😂" },
-      { sender: "Felix", time: "19:34", text: "Lösch das bitte. Ist nicht lustig." },
-      { sender: "Ben", time: "19:35", text: "Entspann dich, war doch nur Spaß." },
-      { sender: "Sara", time: "19:36", text: "Felix hat gesagt, er will das nicht. Dann lösch es doch." }
+      { sender: "Luca", time: "15:47", text: "Sport heute war zu lustig 😂" },
+      { sender: "Nico", time: "15:48", text: "Vor allem Tims Schuss komplett am Tor vorbei." },
+      { sender: "Ben", time: "15:48", text: "Tim einfach Kreisliga-Legende 😂" },
+      { sender: "Luca", time: "15:49", text: "Morgen bitte wieder so, war Highlight des Tages." },
+      { sender: "Tim", time: "15:50", text: "Könnt ihr aufhören? War mir eh schon peinlich." },
+      { sender: "Nico", time: "15:51", text: "Bro, war doch nur Spaß." },
+      { sender: "Ben", time: "15:52", text: "Chill, ist doch nur unser Klassenchat." },
+      { sender: "Tim", time: "15:53", text: "Ja, aber ich bin jetzt zuhause und bekomme trotzdem noch Nachrichten dazu." },
+      { sender: "Mia", time: "15:54", text: "Leute, Tim meint das ernst." }
     ],
-    questions: createInternetCompassQuestions()
+    questions: createInternetCompassQuestions("Ben")
   }
 };
 

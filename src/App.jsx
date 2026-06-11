@@ -6,7 +6,8 @@ import TeacherView from "./components/teacher/TeacherView.jsx";
 
 const APP_VERSION = "student-v2";
 const QUESTIONS_PER_PAGE = 1;
-const ARRAY_ANSWER_TYPES = new Set(["message-select", "property-select"]);
+const ARRAY_ANSWER_TYPES = new Set(["message-select", "property-select", "checklist"]);
+const RULE_SENTENCE_ANSWER_TYPE = "rule-sentence";
 const MAX_TEXT_ANSWER_LENGTH = 2500;
 const MAX_ARRAY_ANSWER_LENGTH = 250;
 
@@ -50,6 +51,10 @@ function emptyAnswerForQuestion(question) {
     return [];
   }
 
+  if (question.type === RULE_SENTENCE_ANSWER_TYPE) {
+    return { rule: "", reason: "" };
+  }
+
   return "";
 }
 
@@ -64,6 +69,10 @@ function emptyAnswersFor(caseData) {
 function isAnswerFilled(answer) {
   if (Array.isArray(answer)) {
     return answer.length > 0;
+  }
+
+  if (answer && typeof answer === "object") {
+    return Object.values(answer).some((entry) => String(entry ?? "").trim().length > 0);
   }
 
   return String(answer ?? "").trim().length > 0;
@@ -84,7 +93,21 @@ function normalizeArrayAnswer(value, maxEntries = 2) {
 
 function normalizeAnswerForQuestion(question, value) {
   if (ARRAY_ANSWER_TYPES.has(question.type)) {
-    return normalizeArrayAnswer(value, question.maxSelections ?? 2);
+    return normalizeArrayAnswer(value, question.maxSelections ?? question.options?.length ?? 2);
+  }
+
+  if (question.type === RULE_SENTENCE_ANSWER_TYPE) {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      return {
+        rule: String(value.rule ?? "").slice(0, MAX_TEXT_ANSWER_LENGTH),
+        reason: String(value.reason ?? "").slice(0, MAX_TEXT_ANSWER_LENGTH)
+      };
+    }
+
+    return {
+      rule: String(value ?? "").slice(0, MAX_TEXT_ANSWER_LENGTH),
+      reason: ""
+    };
   }
 
   return String(value ?? "").slice(0, MAX_TEXT_ANSWER_LENGTH);
@@ -177,7 +200,6 @@ function StudentView({ groupId, onSwitchGroup }) {
   const normalizedAnswers = useMemo(() => normalizeAnswersForCase(caseData, answers), [answers, caseData]);
   const answeredCount = Object.values(normalizedAnswers).filter(isAnswerFilled).length;
   const totalCount = caseData.questions.length;
-  const isLastPage = pageIndex === pages.length;
   const currentQuestion = pages[pageIndex]?.[0];
   const q1Question = caseData.questions.find((question) => question.id === "q1");
   const selectedQ1Messages = Array.isArray(normalizedAnswers.q1) ? normalizedAnswers.q1 : [];
@@ -269,7 +291,7 @@ function StudentView({ groupId, onSwitchGroup }) {
 
     const localOk = safeWrite(groupId, localPayload);
     setSaveError(!localOk);
-    if (!localOk) return;
+    if (!localOk) return false;
 
     setSavedAt(now);
     setAnswers(answersToSave);
@@ -282,6 +304,8 @@ function StudentView({ groupId, onSwitchGroup }) {
       console.warn("Übertragung an Lehrerseite fehlgeschlagen:", error);
       setServerSaveState("server-error");
     }
+
+    return true;
   }
 
   const currentPayload = {
@@ -315,9 +339,7 @@ function StudentView({ groupId, onSwitchGroup }) {
           updateAnswer={updateAnswer}
           answeredCount={answeredCount}
           totalCount={totalCount}
-          isLastPage={isLastPage}
           handleFinalSave={handleFinalSave}
-          savedAt={savedAt}
           saveError={saveError}
           serverSaveState={serverSaveState}
           currentPayload={currentPayload}
