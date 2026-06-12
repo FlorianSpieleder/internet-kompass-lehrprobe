@@ -9,6 +9,8 @@ const STEP_LABELS = [
     "Check",
 ];
 
+const DEFAULT_RULE_PART_MAX_LENGTH = 90;
+
 function progressIndexForPage(pageIndex, isOverviewPage) {
     if (isOverviewPage) {
         return STEP_LABELS.length;
@@ -105,20 +107,17 @@ function answerAsList(value) {
     if (value && typeof value === "object") {
         const rule = String(value.rule ?? "").trim();
         const reason = String(value.reason ?? "").trim();
-
-        if (rule && reason) {
-            return [`Im Klassenchat gilt: ${rule}, weil ${reason}.`];
-        }
+        const entries = [];
 
         if (rule) {
-            return [`Im Klassenchat gilt: ${rule}.`];
+            entries.push(`Regel: ${rule}.`);
         }
 
         if (reason) {
-            return [`Weil ${reason}.`];
+            entries.push(`Begründung: ${reason}.`);
         }
 
-        return [];
+        return entries;
     }
 
     const text = String(value ?? "").trim();
@@ -126,7 +125,8 @@ function answerAsList(value) {
 }
 
 function formatRuleSentence(value) {
-    return answerAsList(value)[0] ?? "Noch keine Regel formuliert.";
+    const entries = answerAsList(value);
+    return entries.length > 0 ? entries.join("\n") : "Noch keine Regel formuliert.";
 }
 
 function PresentationAnswer({ question, value, index }) {
@@ -263,7 +263,7 @@ function TextQuestion({ question, value, onChange }) {
     );
 }
 
-function InlineEditableField({ value, onChange, placeholder, ariaLabel }) {
+function InlineEditableField({ value, onChange, placeholder, ariaLabel, maxLength }) {
     const fieldRef = useRef(null);
 
     useEffect(() => {
@@ -277,8 +277,26 @@ function InlineEditableField({ value, onChange, placeholder, ariaLabel }) {
 
     function handlePaste(event) {
         event.preventDefault();
-        const text = event.clipboardData.getData("text/plain");
+        const currentText = event.currentTarget.textContent ?? "";
+        const remainingLength = Math.max(0, maxLength - currentText.length);
+        const text = event.clipboardData.getData("text/plain").slice(0, remainingLength);
         document.execCommand("insertText", false, text);
+    }
+
+    function handleInput(event) {
+        const nextValue = (event.currentTarget.textContent ?? "").slice(0, maxLength);
+
+        if (event.currentTarget.textContent !== nextValue) {
+            event.currentTarget.textContent = nextValue;
+            const range = document.createRange();
+            range.selectNodeContents(event.currentTarget);
+            range.collapse(false);
+            const selection = window.getSelection();
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+        }
+
+        onChange(nextValue);
     }
 
     return (
@@ -289,9 +307,10 @@ function InlineEditableField({ value, onChange, placeholder, ariaLabel }) {
             role="textbox"
             tabIndex={0}
             aria-label={ariaLabel}
+            aria-multiline="false"
             data-placeholder={placeholder}
             suppressContentEditableWarning
-            onInput={(event) => onChange(event.currentTarget.textContent ?? "")}
+            onInput={handleInput}
             onPaste={handlePaste}
             onKeyDown={(event) => {
                 if (event.key === "Enter") {
@@ -302,7 +321,7 @@ function InlineEditableField({ value, onChange, placeholder, ariaLabel }) {
     );
 }
 
-function RuleSentenceFields({ value, onChange }) {
+function RuleSentenceFields({ value, maxLength = DEFAULT_RULE_PART_MAX_LENGTH, onChange }) {
     const ruleValue = value && typeof value === "object" && !Array.isArray(value) ? value : {};
     const rule = typeof ruleValue.rule === "string" ? ruleValue.rule : "";
     const reason = typeof ruleValue.reason === "string" ? ruleValue.reason : "";
@@ -316,21 +335,30 @@ function RuleSentenceFields({ value, onChange }) {
     }
 
     return (
-        <div className="rule-sentence-builder">
-            <span>Im Klassenchat gilt:</span>
-            <InlineEditableField
-                value={rule}
-                onChange={(nextValue) => updateField("rule", nextValue)}
-                placeholder="wir ..."
-                aria-label="Regel vervollständigen"
-            />
-            <span>, weil</span>
-            <InlineEditableField
-                value={reason}
-                onChange={(nextValue) => updateField("reason", nextValue)}
-                placeholder="..."
-                aria-label="Begründung vervollständigen"
-            />
+        <div className="rule-sentence-fields">
+            <div className="rule-sentence-row">
+                <span>Regel</span>
+                <InlineEditableField
+                    value={rule}
+                    onChange={(nextValue) => updateField("rule", nextValue)}
+                    placeholder="wir ..."
+                    ariaLabel="Regel vervollständigen"
+                    maxLength={maxLength}
+                />
+                <small>{rule.length}/{maxLength}</small>
+            </div>
+
+            <div className="rule-sentence-row">
+                <span>Begründung</span>
+                <InlineEditableField
+                    value={reason}
+                    onChange={(nextValue) => updateField("reason", nextValue)}
+                    placeholder="..."
+                    ariaLabel="Begründung vervollständigen"
+                    maxLength={maxLength}
+                />
+                <small>{reason.length}/{maxLength}</small>
+            </div>
         </div>
     );
 }
@@ -342,6 +370,7 @@ function RuleSentenceQuestion({ question, value, onChange }) {
             <p>{question.helper}</p>
             <RuleSentenceFields
                 value={value}
+                maxLength={question.maxLength ?? DEFAULT_RULE_PART_MAX_LENGTH}
                 onChange={(nextValue) => onChange(question.id, nextValue)}
             />
         </article>

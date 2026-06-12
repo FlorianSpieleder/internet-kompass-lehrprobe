@@ -55,9 +55,10 @@ function createInternetCompassQuestions(actionName) {
       id: "q5",
       type: "rule-sentence",
       label: "Welche Klassenchat-Regel entsteht aus eurem Fall?",
-      helper: "Formuliert aus eurer Handlung eine Regel für den Klassenchat. Die Regel soll auch für ähnliche Situationen gelten und anhand der digitalen Eigenschaft erklären, warum die Regel wichtig ist.",
+      helper: "Formuliert eine kurze Regel und eine kurze Begründung. Beide Antworten dürfen höchstens 90 Zeichen lang sein.",
       rulePlaceholder: "wir ...",
-      reasonPlaceholder: "..."
+      reasonPlaceholder: "...",
+      maxLength: 90
     },
     {
       id: "q6",
