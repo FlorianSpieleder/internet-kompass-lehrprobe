@@ -760,6 +760,19 @@ code {
     inset 0 0 0 2px rgba(34, 166, 242, 0.08);
 }
 
+.teacher-status-card.teacher-finished-card {
+  border-color: #d7dde8;
+  background: linear-gradient(180deg, #f5f7fa, #ffffff);
+  color: #4a5874;
+  opacity: 0.88;
+  box-shadow: 0 8px 18px rgba(23, 32, 51, 0.04);
+}
+
+.teacher-status-card.teacher-finished-card h3,
+.teacher-status-card.teacher-finished-card p {
+  color: #4a5874;
+}
+
 .teacher-status-card h3 {
   margin: 0.65rem 0 0.35rem;
   font-size: 1.2rem;
@@ -1361,6 +1374,27 @@ code {
   font-size: clamp(1.18rem, 2vw, 1.65rem);
   font-weight: 900;
   line-height: 1.32;
+}
+
+.finished-task-card {
+  max-width: 960px;
+}
+
+.finished-task-content {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1rem, 2vw, 1.35rem);
+  border: 1px solid #d9efe2;
+  border-radius: 18px;
+  background: #f7fcf9;
+}
+
+.finished-task-content p {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(1.25rem, 2vw, 1.65rem);
+  font-weight: 850;
+  line-height: 1.38;
 }
 
 .presentation-card,

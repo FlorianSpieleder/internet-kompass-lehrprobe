@@ -3,6 +3,7 @@ import { CASES, getAllCaseIds } from "../../data/cases.js";
 
 const APP_VERSION = "student-v3";
 const GROUP_AVATAR_SRC = "/chatbilder/klassenchat-7b-avatar.svg";
+const FINISHED_TASK_ID = "finished-task";
 
 const ENTRY_CASE = {
   groupName: "Einstieg",
@@ -510,7 +511,8 @@ function TeacherStatusCards({
   selectedGroupId,
   onSelectGroup,
   caseIds = getAllCaseIds(),
-  extraInfoCaseIds = []
+  extraInfoCaseIds = [],
+  showFinishedCard = false
 }) {
   return (
     <div className="teacher-status-grid">
@@ -540,6 +542,19 @@ function TeacherStatusCards({
           </button>
         );
       })}
+      {showFinishedCard && (
+        <button
+          className={`teacher-status-card teacher-finished-card ${selectedGroupId === FINISHED_TASK_ID ? "is-selected" : ""}`}
+          type="button"
+          onClick={() => onSelectGroup(FINISHED_TASK_ID)}
+        >
+          <div className="status-topline">
+            <span>Abschluss</span>
+          </div>
+          <h3>Wir sind fertig</h3>
+          <p>Abschlussaufgabe für schnelle Gruppen</p>
+        </button>
+      )}
     </div>
   );
 }
@@ -640,6 +655,34 @@ function GroupPresentationCard({ groupId, answersData, onBack, showExtendedInfo 
             )}
           </div>
         </aside>
+      </div>
+    </section>
+  );
+}
+
+function FinishedTaskCard({ onBack }) {
+  return (
+    <section className="teacher-presentation-card finished-task-card">
+      <div className="teacher-presentation-header">
+        <div>
+          <h2>Sehr stark!</h2>
+        </div>
+
+        <button className="teacher-back-button" type="button" aria-label="Zurück zur Gruppenübersicht" onClick={onBack}>
+          <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+            <path d="M13.3 8.4 6.2 15.5l7.1 7.1" />
+            <path d="M7.2 15.5h12.1c4.2 0 6.5 2.2 6.5 5.4 0 1.5-.5 2.9-1.5 4" />
+          </svg>
+        </button>
+      </div>
+
+      <div className="finished-task-content">
+        <p>
+          Überprüft nochmal euer Regelblatt, ob ihr alle 4 Regeln und die Eigenschaften eingetragen habt.
+        </p>
+        <p>
+          Danach überprüft ihr euch gegenseitig: Eine Person liest eine Regel vor, der Rest der Gruppe versucht ohne das Regelblatt, die dazugehörenden Eigenschaften zu finden.
+        </p>
       </div>
     </section>
   );
@@ -807,7 +850,7 @@ export default function TeacherView({ viewerGroupId = null }) {
   const visibleCaseIds = getAllCaseIds();
 
   useEffect(() => {
-    if (selectedGroupId && !visibleCaseIds.includes(selectedGroupId)) {
+    if (selectedGroupId && selectedGroupId !== FINISHED_TASK_ID && !visibleCaseIds.includes(selectedGroupId)) {
       setSelectedGroupId(null);
     }
   }, [visibleCaseIds.join(","), selectedGroupId]);
@@ -886,14 +929,10 @@ export default function TeacherView({ viewerGroupId = null }) {
 
       {showImport && !isScopedResultView && <TeacherImportPanel onImport={handleManualImport} />}
 
-      {isScopedResultView && extraInfoCaseIds.length === 0 && loadState !== "loading" && (
-        <div className="notice notice-neutral">
-          Für diese Gruppe sind noch keine Zusatzinformationen freigegeben. Alle Fälle bleiben in der normalen Übersicht verfügbar.
-        </div>
-      )}
-
       {mode === "cards" ? (
-        selectedGroupId ? (
+        selectedGroupId === FINISHED_TASK_ID ? (
+          <FinishedTaskCard onBack={() => setSelectedGroupId(null)} />
+        ) : selectedGroupId ? (
           <GroupPresentationCard
             groupId={selectedGroupId}
             answersData={answersData}
@@ -907,6 +946,7 @@ export default function TeacherView({ viewerGroupId = null }) {
             onSelectGroup={setSelectedGroupId}
             caseIds={visibleCaseIds}
             extraInfoCaseIds={extraInfoCaseIds}
+            showFinishedCard={isScopedResultView}
           />
         )
       ) : (
