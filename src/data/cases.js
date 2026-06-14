@@ -1,10 +1,10 @@
 const DIGITAL_PROPERTIES = [
-  "Nachrichten bleiben gespeichert.",
-  "Nachrichten, Bilder oder Links können schnell weitergeleitet werden.",
-  "Viele können mitlesen.",
-  "Man verliert schnell die Kontrolle darüber, wer eine Information sieht.",
-  "Mimik, Tonfall und Situation fehlen oft.",
-  "Nachrichten können jederzeit kommen und Druck erzeugen."
+  "Nachrichten bleiben gespeichert",
+  "Nachrichten können unkontrolliert weitergeleitet werden",
+  "Viele können mitlesen",
+  "Nachrichten können Druck zu Antworten auslösen",
+  "Nachrichten sind zeitversetzt lesbar",
+  "Ausdruckskanäle wie Mimik und Gestik fehlen"
 ];
 
 const RULE_CHECKLIST = [
@@ -12,7 +12,7 @@ const RULE_CHECKLIST = [
   "Unsere Regel nennt ein konkretes verantwortungsvolles Verhalten.",
   "Unsere Regel berücksichtigt die Folgen digitaler Kommunikation.",
   "Unsere Regel ist verständlich und kurz genug für eine Klassenregel.",
-  "Unsere Regel hilft, bevor ein Schaden entsteht oder größer wird."
+  "Unsere Regel sorgt dafür, dass negative Folgen verhindert oder zumindest weniger schlimm werden."
 ];
 
 function createInternetCompassQuestions(actionName) {
@@ -20,7 +20,7 @@ function createInternetCompassQuestions(actionName) {
     {
       id: "q1",
       type: "message-select",
-      label: "Welche Stelle im Chat ist der Knackpunkt?",
+      label: "Welche Nachrichten sind am problematischsten?",
       helper: "Klickt die Nachricht an, bei der die Situation problematisch wird. Ihr könnt höchstens zwei Nachrichten auswählen.",
       maxSelections: 2
     },
@@ -55,7 +55,7 @@ function createInternetCompassQuestions(actionName) {
       id: "q5",
       type: "rule-sentence",
       label: "Welche Klassenchat-Regel entsteht aus eurem Fall?",
-      helper: "Formuliert eine kurze Regel und eine kurze Begründung. Beide Antworten dürfen höchstens 90 Zeichen lang sein.",
+      helper: "Formuliert eine kurze Regel und eine kurze Begründung.",
       rulePlaceholder: "wir ...",
       reasonPlaceholder: "...",
       maxLength: 90
@@ -74,8 +74,8 @@ function createInternetCompassQuestions(actionName) {
 export const CASES = {
   "1": {
     groupName: "Gruppe 1",
-    title: "Stimmt das wirklich?",
-    focus: "Informationen prüfen, bevor man sie weiterleitet",
+    title: "War das ironisch gemeint?",
+    focus: "Bei unklaren Nachrichten nachfragen, bevor man urteilt",
     chatImage: "/chatbilder/gruppe-1.png",
     studentChat: [
       { sender: "Nina", time: "15:34", text: "Ich hab die Bilder jetzt in die Präsentation eingefügt." },
@@ -112,8 +112,8 @@ export const CASES = {
 
   "2": {
     groupName: "Gruppe 2",
-    title: "Warum antwortet niemand?",
-    focus: "Rücksichtsvoll schreiben und keinen Antwortdruck erzeugen",
+    title: "Stimmt das wirklich?",
+    focus: "Informationen prüfen, bevor man sie weiterleitet",
     chatImage: "/chatbilder/gruppe-2.png",
     studentChat: [
       { sender: "Luca", time: "16:18", text: "Leute, ab morgen werden bei uns angeblich alle Handys morgens eingesammelt 😳" },
@@ -150,39 +150,39 @@ export const CASES = {
 
   "3": {
     groupName: "Gruppe 3",
-    title: "War das ironisch gemeint?",
-    focus: "Bei unklaren Nachrichten nachfragen, bevor man urteilt",
+    title: "Warum antwortet niemand?",
+    focus: "Rücksichtsvoll schreiben und keinen Antwortdruck erzeugen",
     chatImage: "/chatbilder/gruppe-3.png",
     studentChat: [
-      { sender: "Emir", time: "18:42", text: "Lea, kannst du bitte noch die Bilder für unser Plakat schicken?" },
-      { sender: "Lea", time: "18:43", text: "Mach ich später, bin gerade beim Essen." },
-      { sender: "Nico", time: "18:46", text: "Lea?" },
-      { sender: "Nico", time: "18:48", text: "Wir brauchen die Bilder halt heute noch." },
-      { sender: "Tom", time: "18:49", text: "@Lea bitte antworte mal." },
-      { sender: "Nico", time: "18:51", text: "Du bist doch online." },
-      { sender: "Nico", time: "18:52", text: "Warum liest du es und antwortest nicht?" },
-      { sender: "Mia", time: "18:53", text: "Sie hat doch geschrieben, dass sie später antwortet." }
+      { sender: "Emir", time: "13:42", text: "Lea, kannst du bitte noch die Bilder für unser Plakat schicken?" },
+      { sender: "Lea", time: "13:43", text: "Mach ich später, bin gerade beim Essen." },
+      { sender: "Nico", time: "13:46", text: "Lea?" },
+      { sender: "Nico", time: "13:48", text: "Wir brauchen die Bilder halt heute noch." },
+      { sender: "Tom", time: "13:49", text: "@Lea bitte antworte mal." },
+      { sender: "Nico", time: "13:51", text: "Du bist doch online." },
+      { sender: "Nico", time: "13:52", text: "Warum liest du es und antwortest nicht?" },
+      { sender: "Mia", time: "13:53", text: "Sie hat doch geschrieben, dass sie später antwortet." }
     ],
 
     overviewChat: [
-      { sender: "Emir", time: "18:42", text: "Lea, kannst du bitte noch die Bilder für unser Plakat schicken?" },
-      { sender: "Lea", time: "18:43", text: "Mach ich später, bin gerade beim Essen." },
-      { sender: "Nico", time: "18:48", text: "Wir brauchen die Bilder halt heute noch." },
-      { sender: "Tom", time: "18:49", text: "@Lea bitte antworte mal." },
-      { sender: "Nico", time: "18:51", text: "Du bist doch online." },
-      { sender: "Nico", time: "18:52", text: "Warum liest du es und antwortest nicht?" },
-      { sender: "Mia", time: "18:53", text: "Sie hat doch geschrieben, dass sie später antwortet." }
+      { sender: "Emir", time: "13:42", text: "Lea, kannst du bitte noch die Bilder für unser Plakat schicken?" },
+      { sender: "Lea", time: "13:43", text: "Mach ich später, bin gerade beim Essen." },
+      { sender: "Nico", time: "13:48", text: "Wir brauchen die Bilder halt heute noch." },
+      { sender: "Tom", time: "13:49", text: "@Lea bitte antworte mal." },
+      { sender: "Nico", time: "13:51", text: "Du bist doch online." },
+      { sender: "Nico", time: "13:52", text: "Warum liest du es und antwortest nicht?" },
+      { sender: "Mia", time: "13:53", text: "Sie hat doch geschrieben, dass sie später antwortet." }
     ],
 
     fallbackChat: [
-      { sender: "Emir", time: "18:42", text: "Lea, kannst du bitte noch die Bilder für unser Plakat schicken?" },
-      { sender: "Lea", time: "18:43", text: "Mach ich später, bin gerade beim Essen." },
-      { sender: "Nico", time: "18:46", text: "Lea?" },
-      { sender: "Nico", time: "18:48", text: "Wir brauchen die Bilder halt heute noch." },
-      { sender: "Tom", time: "18:49", text: "@Lea bitte antworte mal." },
-      { sender: "Nico", time: "18:51", text: "Du bist doch online." },
-      { sender: "Nico", time: "18:52", text: "Warum liest du es und antwortest nicht?" },
-      { sender: "Mia", time: "18:53", text: "Sie hat doch geschrieben, dass sie später antwortet." }
+      { sender: "Emir", time: "13:42", text: "Lea, kannst du bitte noch die Bilder für unser Plakat schicken?" },
+      { sender: "Lea", time: "13:43", text: "Mach ich später, bin gerade beim Essen." },
+      { sender: "Nico", time: "13:46", text: "Lea?" },
+      { sender: "Nico", time: "13:48", text: "Wir brauchen die Bilder halt heute noch." },
+      { sender: "Tom", time: "13:49", text: "@Lea bitte antworte mal." },
+      { sender: "Nico", time: "13:51", text: "Du bist doch online." },
+      { sender: "Nico", time: "13:52", text: "Warum liest du es und antwortest nicht?" },
+      { sender: "Mia", time: "13:53", text: "Sie hat doch geschrieben, dass sie später antwortet." }
     ],
     questions: createInternetCompassQuestions("Nico")
   },
@@ -225,7 +225,7 @@ export const CASES = {
       { sender: "Tim", time: "15:53", text: "Ja, aber ich bin jetzt zuhause und bekomme trotzdem noch Nachrichten dazu." },
       { sender: "Mia", time: "15:54", text: "Leute, Tim meint das ernst." }
     ],
-    questions: createInternetCompassQuestions("Ben")
+    questions: createInternetCompassQuestions("die Klasse")
   }
 };
 

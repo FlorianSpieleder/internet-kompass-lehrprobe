@@ -70,7 +70,7 @@ export function emptyPermissions() {
     });
   });
 
-  return { matrix, groupModes, updatedAt: null };
+  return { matrix, groupModes, updatedAt: null, resetAt: null };
 }
 
 export function sanitizePermissions(payload) {
@@ -97,6 +97,7 @@ export function sanitizePermissions(payload) {
   });
 
   permissions.updatedAt = payload?.updatedAt || new Date().toISOString();
+  permissions.resetAt = payload?.resetAt || null;
   return permissions;
 }
 

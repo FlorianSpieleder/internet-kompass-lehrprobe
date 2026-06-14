@@ -4,7 +4,7 @@ import ChatPanel from "./components/chat/ChatPanel.jsx";
 import QuestionSection from "./components/student/QuestionSection.jsx";
 import TeacherView from "./components/teacher/TeacherView.jsx";
 
-const APP_VERSION = "student-v2";
+const APP_VERSION = "student-v3";
 const QUESTIONS_PER_PAGE = 1;
 const ARRAY_ANSWER_TYPES = new Set(["message-select", "property-select", "checklist"]);
 const RULE_SENTENCE_ANSWER_TYPE = "rule-sentence";
@@ -149,7 +149,7 @@ function emptyPermissions() {
     });
   });
 
-  return { matrix, groupModes, updatedAt: null };
+  return { matrix, groupModes, updatedAt: null, resetAt: null };
 }
 
 function normalizePermissions(rawPermissions) {
@@ -176,6 +176,7 @@ function normalizePermissions(rawPermissions) {
   });
 
   permissions.updatedAt = rawPermissions?.updatedAt ?? null;
+  permissions.resetAt = rawPermissions?.resetAt ?? null;
   return permissions;
 }
 
@@ -428,7 +429,10 @@ function SharedCaseChat({ caseData, selectedMessages }) {
             key={`${message.sender}-${message.time}-${index}`}
             className={`shared-chat-message ${isSelected ? "is-selected" : ""}`}
           >
-            <strong>{message.sender}</strong>
+            <div className="shared-chat-meta">
+              <strong>{message.sender}</strong>
+              <time>{message.time}</time>
+            </div>
             <span>{message.text}</span>
           </div>
         );
@@ -557,7 +561,7 @@ function ExtendedReadAccessPanel({ groupId }) {
   );
 }
 
-function StudentView({ groupId, onSwitchGroup }) {
+function StudentView({ groupId, onSwitchGroup, lessonResetAt = null }) {
   const caseData = getCaseById(groupId);
   const pages = useMemo(() => splitIntoPages(caseData.questions), [caseData]);
   const questionsById = useMemo(() => {
@@ -567,11 +571,13 @@ function StudentView({ groupId, onSwitchGroup }) {
   const [hasReadChat, setHasReadChat] = useState(false);
   const [answers, setAnswers] = useState(() => {
     const saved = safeRead(groupId);
-    return normalizeAnswersForCase(caseData, saved?.answers);
+    const canUseSaved = !lessonResetAt || saved?.lessonResetAt === lessonResetAt;
+    return normalizeAnswersForCase(caseData, canUseSaved ? saved?.answers : null);
   });
   const [savedAt, setSavedAt] = useState(() => {
     const saved = safeRead(groupId);
-    return saved?.savedAt ?? null;
+    const canUseSaved = !lessonResetAt || saved?.lessonResetAt === lessonResetAt;
+    return canUseSaved ? saved?.savedAt ?? null : null;
   });
   const [saveError, setSaveError] = useState(false);
   const [serverSaveState, setServerSaveState] = useState("idle");
@@ -587,13 +593,14 @@ function StudentView({ groupId, onSwitchGroup }) {
 
   useEffect(() => {
     const saved = safeRead(groupId);
-    setAnswers(normalizeAnswersForCase(caseData, saved?.answers));
-    setSavedAt(saved?.savedAt ?? null);
+    const canUseSaved = !lessonResetAt || saved?.lessonResetAt === lessonResetAt;
+    setAnswers(normalizeAnswersForCase(caseData, canUseSaved ? saved?.answers : null));
+    setSavedAt(canUseSaved ? saved?.savedAt ?? null : null);
     setPageIndex(0);
     setHasReadChat(false);
     setSaveError(false);
     setServerSaveState("idle");
-  }, [groupId, caseData]);
+  }, [groupId, caseData, lessonResetAt]);
 
   useEffect(() => {
     const ok = safeWrite(groupId, {
@@ -602,12 +609,13 @@ function StudentView({ groupId, onSwitchGroup }) {
       focus: caseData.focus,
       answers: normalizedAnswers,
       savedAt,
+      lessonResetAt,
       lastEditedAt: new Date().toISOString(),
       finalSaveClicked: Boolean(savedAt)
     });
 
     setSaveError(!ok);
-  }, [normalizedAnswers, caseData.title, caseData.focus, groupId, savedAt]);
+  }, [normalizedAnswers, caseData.title, caseData.focus, groupId, savedAt, lessonResetAt]);
 
   function markUnsaved() {
     if (savedAt) setSavedAt(null);
@@ -664,6 +672,7 @@ function StudentView({ groupId, onSwitchGroup }) {
       focus: caseData.focus,
       answers: answersToSave,
       savedAt: now,
+      lessonResetAt,
       lastEditedAt: now,
       finalSaveClicked: true
     };
@@ -732,6 +741,7 @@ function StudentView({ groupId, onSwitchGroup }) {
 function GroupModeRoute({ groupId, onSwitchGroup }) {
   const [routeState, setRouteState] = useState("loading");
   const [groupMode, setGroupMode] = useState("student");
+  const [lessonResetAt, setLessonResetAt] = useState(null);
 
   useEffect(() => {
     let isActive = true;
@@ -749,6 +759,7 @@ function GroupModeRoute({ groupId, onSwitchGroup }) {
 
         if (!isActive) return;
         setGroupMode(permissions.groupModes?.[groupId] === "overview" ? "overview" : "student");
+        setLessonResetAt(permissions.resetAt ?? null);
         setRouteState("ready");
       } catch (error) {
         console.warn("Gruppenmodus konnte nicht geladen werden:", error);
@@ -783,7 +794,7 @@ function GroupModeRoute({ groupId, onSwitchGroup }) {
     return <TeacherView viewerGroupId={groupId} />;
   }
 
-  return <StudentView groupId={groupId} onSwitchGroup={onSwitchGroup} />;
+  return <StudentView groupId={groupId} onSwitchGroup={onSwitchGroup} lessonResetAt={lessonResetAt} />;
 }
 
 export default function App() {

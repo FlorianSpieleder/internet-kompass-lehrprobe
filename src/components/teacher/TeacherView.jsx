@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { CASES, getAllCaseIds } from "../../data/cases.js";
 
-const APP_VERSION = "student-v2";
-const GROUP_AVATAR_SRC = "/chatbilder/klassenchat-7b-avatar.png";
+const APP_VERSION = "student-v3";
+const GROUP_AVATAR_SRC = "/chatbilder/klassenchat-7b-avatar.svg";
 
 const ENTRY_CASE = {
   groupName: "Einstieg",
@@ -32,7 +32,7 @@ function emptyPermissions() {
     });
   });
 
-  return { matrix, groupModes, updatedAt: null };
+  return { matrix, groupModes, updatedAt: null, resetAt: null };
 }
 
 function normalizePermissions(rawPermissions) {
@@ -59,6 +59,7 @@ function normalizePermissions(rawPermissions) {
   });
 
   permissions.updatedAt = rawPermissions?.updatedAt ?? null;
+  permissions.resetAt = rawPermissions?.resetAt ?? null;
   return permissions;
 }
 
@@ -410,6 +411,21 @@ function teacherImportStorageKey() {
   return `internet-kompass:${APP_VERSION}:teacher-imports`;
 }
 
+function studentStorageKey(groupId) {
+  return `internet-kompass:${APP_VERSION}:gruppe-${groupId}`;
+}
+
+function clearLocalLessonStorage() {
+  try {
+    getAllCaseIds().forEach((groupId) => {
+      window.localStorage.removeItem(studentStorageKey(groupId));
+    });
+    window.localStorage.removeItem(teacherImportStorageKey());
+  } catch (error) {
+    console.warn("Lokale Browserdaten konnten nicht vollständig gelöscht werden:", error);
+  }
+}
+
 function readTeacherImports() {
   try {
     const raw = window.localStorage.getItem(teacherImportStorageKey());
@@ -673,6 +689,9 @@ function CompactOverviewTable({ answersData, caseIds = getAllCaseIds() }) {
           </tbody>
         </table>
       </div>
+      <p className="overview-table-fast-question">
+        Für Schnelle: Fasst zusammen: Warum brauchen wir im Klassenchat besondere Regeln?
+      </p>
     </section>
   );
 }
@@ -727,8 +746,18 @@ export default function TeacherView({ viewerGroupId = null }) {
 
     setLoadState("loading");
     try {
-      const result = await postJson("/api/reset", {});
-      writeTeacherImports({});
+      const now = new Date().toISOString();
+      const resetPermissions = {
+        ...emptyPermissions(),
+        updatedAt: now,
+        resetAt: now
+      };
+      const [result, permissionsResult] = await Promise.all([
+        postJson("/api/reset", {}),
+        postJson("/api/permissions", resetPermissions)
+      ]);
+      clearLocalLessonStorage();
+      setPermissions(normalizePermissions(permissionsResult.data));
       setAnswersData({
         ...(result.data ?? { groups: {}, updatedAt: null }),
         groups: {}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const STEP_LABELS = [
-    "Knackpunkt",
+    "Problemstelle",
     "Eigenschaften",
     "Folgen",
     "Handlung",
@@ -79,7 +79,7 @@ function MessageSelectQuestion({ question, value }) {
         <article className="question-card">
             <h2>{question.label}</h2>
             <p>
-                Klickt die passende Nachricht direkt links im Chat an. Ihr könnt höchstens {maxSelections} Nachrichten auswählen.
+                Klickt die passende Nachrichten direkt links im Chat an. Ihr könnt höchstens {maxSelections} Nachrichten auswählen.
             </p>
 
             <div className="message-selection-summary">
@@ -159,19 +159,49 @@ function StudentPresentationOverview({ caseData, answers }) {
 
     return (
         <article className="student-summary">
-            <div className="student-summary-rule-notice">
-                Schreibt nun eure fertige Regel auf das Regelblatt.
-            </div>
+            <header className="student-summary-hero">
+                <h2>Super!</h2>
+                <div className="student-summary-rule-notice">
+                    Schreibt nun eure fertige Regel auf das Regelblatt.
+                </div>
+            </header>
 
-            <div className="student-summary-grid">
-                {summaryQuestions.map(({ question, index }) => (
-                    <PresentationAnswer
-                        key={question.id}
-                        question={question}
-                        index={index}
-                        value={answers[question.id]}
-                    />
-                ))}
+            <section className="student-summary-answers" aria-labelledby="student-summary-answers-title">
+                <h3 id="student-summary-answers-title">Eure Antworten</h3>
+
+                <div className="student-summary-grid">
+                    {summaryQuestions.map(({ question, index }) => (
+                        <PresentationAnswer
+                            key={question.id}
+                            question={question}
+                            index={index}
+                            value={answers[question.id]}
+                        />
+                    ))}
+                </div>
+            </section>
+        </article>
+    );
+}
+
+function StudentPresentationPractice() {
+    return (
+        <article className="question-card presentation-practice-card">
+            <h2>Bereitet euren Vortrag vor</h2>
+            <p>
+                Für besonders schnelle: Übt und besprecht gemeinsam, wie ihr eure Regel später erklärt. Geht dabei auf folgende Punkte ein:
+            </p>
+
+            <div className="presentation-practice-lines">
+                <div>
+                    <strong>In unserem Klassenchat ging es um ...</strong>
+                </div>
+                <div>
+                    <strong>Unsere Regel lautet ...</strong>
+                </div>
+                <div>
+                    <strong>Diese ist besonders wichtig, weil ...</strong>
+                </div>
             </div>
         </article>
     );
@@ -488,7 +518,7 @@ function SavedNotice({ saveError, serverSaveState }) {
     if (serverSaveState === "server-error") {
         return (
             <div className="notice notice-error">
-                Lokal gespeichert, aber nicht an die Lehrerseite übertragen. Bitte noch einmal auf „Antworten speichern“ klicken oder die Lehrkraft rufen.
+                Lokal gespeichert, aber nicht an die Lehrerseite übertragen. Bitte noch einmal auf „Speichern“ klicken oder die Lehrkraft rufen.
             </div>
         );
     }
@@ -580,12 +610,12 @@ export default function QuestionSection({
                                             serverSaveState,
                                         currentPayload
                                     }) {
-    const pageCount = pages.length + 1;
+    const pageCount = pages.length + 2;
     const isOverviewPage = pageIndex === pages.length;
+    const isPresentationPracticePage = pageIndex === pages.length + 1;
     const isLastQuestionPage = pageIndex === pages.length - 1;
     const progressIndex = progressIndexForPage(pageIndex, isOverviewPage);
     const isSaving = serverSaveState === "saving";
-    const [isEmergencyOpen, setIsEmergencyOpen] = useState(false);
 
     async function handleNext() {
         if (isLastQuestionPage) {
@@ -631,6 +661,8 @@ export default function QuestionSection({
                     caseData={caseData}
                     answers={answers}
                 />
+            ) : isPresentationPracticePage ? (
+                <StudentPresentationPractice />
             ) : (
                 <div className="questions">
                     {pages[pageIndex].map((question) => (
@@ -656,20 +688,21 @@ export default function QuestionSection({
                 </button>
 
                 <button
-                    className="ghost-button navigation-help-button"
+                    className="save-button"
                     type="button"
-                    onClick={() => setIsEmergencyOpen((current) => !current)}
+                    onClick={handleFinalSave}
+                    disabled={isSaving}
                 >
-                    Technische Hilfe
+                    {isSaving ? "Speichert ..." : "Speichern"}
                 </button>
 
-                {!isOverviewPage && (
+                {(isOverviewPage || !isPresentationPracticePage) && (
                     <button
                         className="primary-button"
                         onClick={handleNext}
                         disabled={isSaving}
                     >
-                        {isSaving ? "Speichert ..." : "Weiter"}
+                        {isOverviewPage ? "Wir sind fertig!" : isSaving ? "Speichert ..." : "Weiter"}
                     </button>
                 )}
             </footer>
@@ -678,7 +711,7 @@ export default function QuestionSection({
 
             <EmergencyCodeBox
                 payload={currentPayload}
-                isOpen={isEmergencyOpen}
+                isOpen={serverSaveState === "server-error"}
             />
         </section>
     );

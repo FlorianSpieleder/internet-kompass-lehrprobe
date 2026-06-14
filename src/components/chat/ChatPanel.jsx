@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "./ChatPanel.css";
 
-const GROUP_AVATAR_SRC = "/chatbilder/klassenchat-7b-avatar.png";
+const GROUP_AVATAR_SRC = "/chatbilder/klassenchat-7b-avatar.svg";
 
 function getInitials(name) {
     return String(name || "?")
